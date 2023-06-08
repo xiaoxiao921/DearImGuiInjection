@@ -1,13 +1,13 @@
-﻿using MonoMod.RuntimeDetour;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using MonoMod.RuntimeDetour;
 using NativeMemory;
 using PortableExecutable;
 using SharpDX.DXGI;
-using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices;
-using System;
-using System.Linq;
-using System.Text;
 
 namespace RendererFinder.Renderers;
 
