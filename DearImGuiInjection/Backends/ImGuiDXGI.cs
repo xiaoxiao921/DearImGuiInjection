@@ -13,11 +13,18 @@ internal static class ImGuiDXGI
 
     private static RenderTargetView _renderTargetView;
 
+    private static IntPtr _originalWindowProc;
+    private const int GWL_WNDPROC = -4;
+
+    private static POINT _cursorCoords;
+
     internal static void Init()
     {
         RendererFinder.Renderers.DXGIRenderer.OnPresent += InitImGui;
 
         RendererFinder.Renderers.DXGIRenderer.OnPresent += RenderImGui;
+        RendererFinder.Renderers.DXGIRenderer.PreResizeBuffers += PreResizeBuffers;
+        RendererFinder.Renderers.DXGIRenderer.PostResizeBuffers += PostResizeBuffers;
     }
 
     internal static void Dispose()
@@ -27,17 +34,18 @@ internal static class ImGuiDXGI
             return;
         }
 
+        RendererFinder.Renderers.DXGIRenderer.PostResizeBuffers -= PostResizeBuffers;
+        RendererFinder.Renderers.DXGIRenderer.PreResizeBuffers -= PreResizeBuffers;
         RendererFinder.Renderers.DXGIRenderer.OnPresent -= RenderImGui;
 
-        Log.Info("ImGui.ImGuiImplDX11Shutdown()");
-
-        ImGui.ImGuiImplDX11Shutdown();
-
-        DearImGuiInjection.Initialized = false;
-
-        _windowHandle = IntPtr.Zero;
+        SetWindowLongPtr64(_windowHandle, GWL_WNDPROC, _originalWindowProc);
 
         _renderTargetView = null;
+
+        Log.Info("ImGui.ImGuiImplDX11Shutdown()");
+        ImGui.ImGuiImplDX11Shutdown();
+
+        _windowHandle = IntPtr.Zero;
     }
 
     private static unsafe void InitImGui(SwapChain swapChain, uint syncInterval, uint flags)
@@ -50,15 +58,11 @@ internal static class ImGuiDXGI
 
             DearImGuiInjection.IO = ImGui.GetIO();
 
-            DearImGuiInjection.IO.ConfigFlags |= (int)ImGuiConfigFlags.ViewportsEnable;
+            InitImGuiWin32(windowHandle);
 
-            InitializeWithHandle(windowHandle);
+            DearImGuiInjection.UpdateCursorVisibility();
 
-            using var device = swapChain.GetDevice<Device>();
-            ImGui.ImGuiImplDX11Init((void*)device.NativePointer, (void*)device.ImmediateContext.NativePointer);
-
-            using var backBuffer = swapChain.GetBackBuffer<Texture2D>(0);
-            _renderTargetView = new RenderTargetView(device, backBuffer);
+            InitImGuiDX11(swapChain);
 
             DearImGuiInjection.Initialized = true;
         }
@@ -66,7 +70,7 @@ internal static class ImGuiDXGI
         RendererFinder.Renderers.DXGIRenderer.OnPresent -= InitImGui;
     }
 
-    private static unsafe void InitializeWithHandle(IntPtr windowHandle)
+    private static unsafe void InitImGuiWin32(IntPtr windowHandle)
     {
         if (!DearImGuiInjection.Initialized)
         {
@@ -77,32 +81,36 @@ internal static class ImGuiDXGI
             Log.Info($"ImGuiImplWin32Init, Window Handle: {windowHandle:X}");
             ImGui.ImGuiImplWin32Init(_windowHandle);
 
-            var origWindowProc = GetWindowLongPtr(windowHandle, GWL_WNDPROC);
-            var wndProcHandlerPtr = Marshal.GetFunctionPointerForDelegate(new WndProcDelegate(WndProcHandler));
-            _original = SetWindowLongPtr64(windowHandle, GWL_WNDPROC, wndProcHandlerPtr);
+            _originalWindowProc = SetWindowLongPtr64(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(new WndProcDelegate(WndProcHandler)));
         }
     }
 
-    private static IntPtr _original;
-    private const int GWL_WNDPROC = -4;
+    private static unsafe void InitImGuiDX11(SwapChain swapChain)
+    {
+        using var device = swapChain.GetDevice<Device>();
+        ImGui.ImGuiImplDX11Init((void*)device.NativePointer, (void*)device.ImmediateContext.NativePointer);
+        using var backBuffer = swapChain.GetBackBuffer<Texture2D>(0);
+        _renderTargetView = new RenderTargetView(device, backBuffer);
+    }
+
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
     private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
     [DllImport("user32.dll")]
-    static extern IntPtr CallWindowProc(IntPtr previousWindowProc, IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
+    private static extern IntPtr CallWindowProc(IntPtr previousWindowProc, IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate IntPtr WndProcDelegate(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    static extern bool GetCursorPos(out POINT point);
+    private static extern bool GetCursorPos(out POINT point);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    static extern bool SetCursorPos(int x, int y);
+    private static extern bool SetCursorPos(int x, int y);
 
     [StructLayout(LayoutKind.Sequential)]
     struct POINT
@@ -111,42 +119,29 @@ internal static class ImGuiDXGI
         public Int32 Y;
     }
 
-    private static POINT cursor_coords;
     private static unsafe IntPtr WndProcHandler(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam)
     {
         ImGui.ImplWin32_WndProcHandler((void*)windowHandle, (uint)message, wParam, lParam);
 
         if (message == WindowMessage.WM_KEYUP && (VirtualKey)wParam == DearImGuiInjection.CursorVisibilityToggle)
         {
-            if (DearImGuiInjection.IsCursorVisible)
-            {
-                GetCursorPos(out cursor_coords);
-            }
-            else if (cursor_coords.X + cursor_coords.Y != 0)
-            {
-                SetCursorPos(cursor_coords.X, cursor_coords.Y);
-            }
+            SaveOrRestoreCursorPosition();
 
-            ToggleCursor();
+            DearImGuiInjection.ToggleCursor();
         }
 
-        return CallWindowProc(_original, windowHandle, message, wParam, lParam);
+        return CallWindowProc(_originalWindowProc, windowHandle, message, wParam, lParam);
     }
 
-    private static void ToggleCursor()
+    private static unsafe void SaveOrRestoreCursorPosition()
     {
-        DearImGuiInjection.IsCursorVisible ^= true;
-
-        var io = DearImGuiInjection.IO;
         if (DearImGuiInjection.IsCursorVisible)
         {
-            io.MouseDrawCursor = true;
-            io.ConfigFlags &= ~(int)ImGuiConfigFlags.NoMouse;
+            GetCursorPos(out _cursorCoords);
         }
-        else
+        else if (_cursorCoords.X + _cursorCoords.Y != 0)
         {
-            io.MouseDrawCursor = false;
-            io.ConfigFlags |= (int)ImGuiConfigFlags.NoMouse;
+            SetCursorPos(_cursorCoords.X, _cursorCoords.Y);
         }
     }
 
@@ -154,10 +149,9 @@ internal static class ImGuiDXGI
     {
         var windowHandle = swapChain.Description.OutputHandle;
 
-        // Ignore windows which don't belong to us.
         if (!CheckWindowHandle(windowHandle))
         {
-            Log.Info($"[DX11 Present] Discarding Window Handle {windowHandle} due to Mismatch");
+            Log.Info($"[DX11] Discarding window handle {windowHandle:X} due to mismatch");
             return;
         }
 
@@ -208,5 +202,49 @@ internal static class ImGuiDXGI
             ImGui.UpdatePlatformWindows();
             ImGui.RenderPlatformWindowsDefault(IntPtr.Zero, IntPtr.Zero);
         }
+    }
+
+    private static void PreResizeBuffers(SwapChain swapChain, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
+    {
+        if (!DearImGuiInjection.Initialized)
+        {
+            return;
+        }
+
+        var windowHandle = swapChain.Description.OutputHandle;
+
+        Log.Info($"[DX11 ResizeBuffers] Window Handle {windowHandle:X}");
+
+        if (!CheckWindowHandle(windowHandle))
+        {
+            Log.Info($"[DX11 ResizeBuffers] Discarding window handle {windowHandle:X} due to mismatch");
+            return;
+        }
+
+        _renderTargetView?.Dispose();
+        _renderTargetView = null;
+        ImGui.ImGuiImplDX11InvalidateDeviceObjects();
+    }
+
+    private static void PostResizeBuffers(SwapChain swapChain, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
+    {
+        if (!DearImGuiInjection.Initialized)
+        {
+            return;
+        }
+
+        var windowHandle = swapChain.Description.OutputHandle;
+
+        if (!CheckWindowHandle(windowHandle))
+        {
+            Log.Info($"[DX11 ResizeBuffers] Discarding window handle {windowHandle:X} due to mismatch");
+            return;
+        }
+
+        ImGui.ImGuiImplDX11CreateDeviceObjects();
+
+        using var device = swapChain.GetDevice<Device>();
+        using var backBuffer = swapChain.GetBackBuffer<Texture2D>(0);
+        _renderTargetView = new RenderTargetView(device, backBuffer);
     }
 }

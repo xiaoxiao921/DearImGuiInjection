@@ -14,13 +14,23 @@ namespace RendererFinder.Renderers;
 public class DXGIRenderer : IRenderer
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate long CDXGISwapChainPresentDelegate(IntPtr self, uint SyncInterval, uint Flags);
+    private delegate IntPtr CDXGISwapChainPresentDelegate(IntPtr self, uint syncInterval, uint flags);
+    private static NativeDetour _detourPresent;
+    private static CDXGISwapChainPresentDelegate _originalPresent;
 
     public static event Action<SwapChain, uint, uint> OnPresent { add { _onPresentAction += value; } remove { _onPresentAction -= value; } }
     private static event Action<SwapChain, uint, uint> _onPresentAction;
 
-    private static NativeDetour _detour;
-    private static CDXGISwapChainPresentDelegate _original;
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate IntPtr CDXGISwapChainResizeBuffersDelegate(IntPtr self, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags);
+    private static NativeDetour _detourResizeBuffers;
+    private static CDXGISwapChainResizeBuffersDelegate _originalResizeBuffers;
+
+    public static event Action<SwapChain, uint, uint, uint, Format, uint> PreResizeBuffers { add { _preResizeBuffers += value; } remove { _preResizeBuffers -= value; } }
+    private static event Action<SwapChain, uint, uint, uint, Format, uint> _preResizeBuffers;
+
+    public static event Action<SwapChain, uint, uint, uint, Format, uint> PostResizeBuffers { add { _postResizeBuffers += value; } remove { _postResizeBuffers -= value; } }
+    private static event Action<SwapChain, uint, uint, uint, Format, uint> _postResizeBuffers;
 
     public bool Init()
     {
@@ -56,25 +66,40 @@ public class DXGIRenderer : IRenderer
         }
         var swapChainPresentFunctionPtr = dxgiModule.BaseAddress.Add(swapChainPresentFunctionOffset);
 
-        _detour = new NativeDetour(
+        _detourPresent = new NativeDetour(
             swapChainPresentFunctionPtr,
             Marshal.GetFunctionPointerForDelegate(new CDXGISwapChainPresentDelegate(SwapChainPresentHook)),
             new NativeDetourConfig { ManualApply = true });
-        _original = _detour.GenerateTrampoline<CDXGISwapChainPresentDelegate>();
-        _detour.Apply();
+        _originalPresent = _detourPresent.GenerateTrampoline<CDXGISwapChainPresentDelegate>();
+        _detourPresent.Apply();
+
+        var swapChainResizeBuffersFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::ResizeBuffers\0") });
+        if (swapChainResizeBuffersFunctionOffset == IntPtr.Zero)
+        {
+            Log.Error("swapChainResizeBuffersFunctionOffset == IntPtr.Zero");
+            return false;
+        }
+        var swapChainResizeBuffersFunctionPtr = dxgiModule.BaseAddress.Add(swapChainResizeBuffersFunctionOffset);
+
+        _detourResizeBuffers = new NativeDetour(
+            swapChainResizeBuffersFunctionPtr,
+            Marshal.GetFunctionPointerForDelegate(new CDXGISwapChainResizeBuffersDelegate(SwapChainResizeBuffersHook)),
+            new NativeDetourConfig { ManualApply = true });
+        _originalResizeBuffers = _detourResizeBuffers.GenerateTrampoline<CDXGISwapChainResizeBuffersDelegate>();
+        _detourResizeBuffers.Apply();
 
         return true;
     }
 
     public void Dispose()
     {
-        _detour.Dispose();
-        _original = null;
+        _detourPresent.Dispose();
+        _originalPresent = null;
 
         _onPresentAction = null;
     }
 
-    private static long SwapChainPresentHook(IntPtr self, uint syncInterval, uint flags)
+    private static IntPtr SwapChainPresentHook(IntPtr self, uint syncInterval, uint flags)
     {
         using var swapChain = new SwapChain(self);
 
@@ -93,6 +118,45 @@ public class DXGIRenderer : IRenderer
             }
         }
 
-        return _original(self, syncInterval, flags);
+        return _originalPresent(self, syncInterval, flags);
+    }
+
+    private IntPtr SwapChainResizeBuffersHook(IntPtr swapchainPtr, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
+    {
+        using var swapChain = new SwapChain(swapchainPtr);
+
+        if (_preResizeBuffers != null)
+        {
+            foreach (Action<SwapChain, uint, uint, uint, Format, uint> item in _preResizeBuffers.GetInvocationList())
+            {
+                try
+                {
+                    item(swapChain, bufferCount, width, height, newFormat, swapchainFlags);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                }
+            }
+        }
+
+        var result = _originalResizeBuffers(swapchainPtr, bufferCount, width, height, newFormat, swapchainFlags);
+
+        if (_postResizeBuffers != null)
+        {
+            foreach (Action<SwapChain, uint, uint, uint, Format, uint> item in _postResizeBuffers.GetInvocationList())
+            {
+                try
+                {
+                    item(swapChain, bufferCount, width, height, newFormat, swapchainFlags);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e);
+                }
+            }
+        }
+
+        return result;
     }
 }

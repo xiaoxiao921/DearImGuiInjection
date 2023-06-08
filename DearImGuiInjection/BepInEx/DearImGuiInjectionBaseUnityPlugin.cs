@@ -1,5 +1,4 @@
 using BepInEx;
-using DearImguiSharp;
 
 namespace DearImGuiInjection.BepInEx;
 
@@ -11,22 +10,6 @@ internal class DearImguiInjectionBaseUnityPlugin : BaseUnityPlugin
         Log.Init(new BepInExLog(Logger));
 
         DearImGuiInjection.Init();
-
-        DearImGuiInjection.Render += DearImGuiInjection_Render;
-    }
-
-    private void DearImGuiInjection_Render()
-    {
-        var dummy = true;
-        if (DearImGuiInjection.IsCursorVisible)
-        {
-            ImGui.ShowDemoWindow(ref dummy);
-        }
-    }
-
-    private void Update()
-    {
-
     }
 
     private void OnDestroy()

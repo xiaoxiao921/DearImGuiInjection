@@ -48,6 +48,14 @@ public static class DearImGuiInjection
         }
 
         DisposeImplementationFromRendererKind(RendererFinder.RendererFinder.RendererKind);
+
+        RenderAction = null;
+
+        IO = null;
+
+        Context = null;
+
+        Initialized = false;
     }
 
     private static void InitImplementationFromRendererKind(RendererKind rendererKind)
@@ -71,6 +79,26 @@ public static class DearImGuiInjection
             case RendererKind.DXGI:
                 ImGuiDXGI.Dispose();
                 break;
+        }
+    }
+
+    internal static void ToggleCursor()
+    {
+        IsCursorVisible ^= true;
+        UpdateCursorVisibility();
+    }
+
+    internal static void UpdateCursorVisibility()
+    {
+        if (IsCursorVisible)
+        {
+            IO.MouseDrawCursor = true;
+            IO.ConfigFlags &= ~(int)ImGuiConfigFlags.NoMouse;
+        }
+        else
+        {
+            IO.MouseDrawCursor = false;
+            IO.ConfigFlags |= (int)ImGuiConfigFlags.NoMouse;
         }
     }
 }

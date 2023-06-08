@@ -1,0 +1,93 @@
+﻿using System.Collections.Generic;
+using BepInEx;
+using DearImguiSharp;
+using MonoMod.RuntimeDetour;
+using UnityEngine;
+
+namespace TestPlugin;
+
+[BepInDependency(DearImGuiInjection.Metadata.GUID)]
+[BepInPlugin(Metadata.GUID, Metadata.Name, Metadata.Version)]
+internal class TestPlugin : BaseUnityPlugin
+{
+    private static bool _isMyUIOpen = true;
+
+    private static List<Hook> Hooks = new();
+
+    private void Awake()
+    {
+        Log.Init(new BepInExLog(Logger));
+    }
+
+    private void OnEnable()
+    {
+        DearImGuiInjection.DearImGuiInjection.Render += MyUI;
+    }
+
+    private void Update()
+    {
+        UpdateMethod();
+    }
+
+    private static void UpdateMethod()
+    {
+        if (Input.GetKey("f3"))
+        {
+
+        }
+    }
+
+    private static void MyUI()
+    {
+        if (DearImGuiInjection.DearImGuiInjection.IsCursorVisible)
+        {
+            var dummy = true;
+            ImGui.ShowDemoWindow(ref dummy);
+
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("MainBar", true))
+                {
+                    if (ImGui.MenuItemBool("MyTestPlugin", null, false, true))
+                    {
+                        _isMyUIOpen ^= true;
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMainMenuBar();
+            }
+
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("MainBar", true))
+                {
+                    if (ImGui.MenuItemBool("MyTestPlugin2", null, false, true))
+                    {
+                        _isMyUIOpen ^= true;
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMainMenuBar();
+            }
+        }
+
+        if (_isMyUIOpen)
+        {
+            var dummy2 = true;
+            ImGui.Begin(Metadata.GUID, ref dummy2, (int)ImGuiWindowFlags.None);
+
+            ImGui.Text("hello there");
+
+            ImGui.End();
+        }
+    }
+
+    private void OnDisable()
+    {
+        DearImGuiInjection.DearImGuiInjection.Render -= MyUI;
+    }
+}
