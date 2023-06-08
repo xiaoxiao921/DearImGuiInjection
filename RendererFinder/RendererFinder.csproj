@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="MonoMod.RuntimeDetour" Version="22.1.29.1" />
+	  <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="../NativeMemory/NativeMemory.csproj" />
+		<ProjectReference Include="../PortableExecutable/PortableExecutable.csproj" />
+	</ItemGroup>
+
+</Project>
