@@ -1,35 +1,37 @@
-using System;
+﻿using System;
 
-namespace Logger;
+namespace PortableExecutable;
 
-public static class Log
+internal static class Log
 {
-    public static void Debug(object data)
+    internal const string Prefix = "[PortableExecutable] ";
+
+    internal static void Debug(object data)
     {
         WriteLine(data, ConsoleColor.White);
     }
 
-    public static void Error(object data)
+    internal static void Error(object data)
     {
         WriteLine(data, ConsoleColor.Red);
     }
 
-    public static void Fatal(object data)
+    internal static void Fatal(object data)
     {
         WriteLine(data, ConsoleColor.Red);
     }
 
-    public static void Info(object data)
+    internal static void Info(object data)
     {
         WriteLine(data, ConsoleColor.White);
     }
 
-    public static void Message(object data)
+    internal static void Message(object data)
     {
         WriteLine(data, ConsoleColor.White);
     }
 
-    public static void Warning(object data)
+    internal static void Warning(object data)
     {
         WriteLine(data, ConsoleColor.Yellow);
     }
@@ -38,7 +40,7 @@ public static class Log
     {
         Console.ForegroundColor = color;
 
-        Console.WriteLine(data);
+        Console.WriteLine(Prefix + data);
 
         Console.ResetColor();
     }

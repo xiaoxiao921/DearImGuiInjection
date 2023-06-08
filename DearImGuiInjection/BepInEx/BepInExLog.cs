@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace DearImGuiInjection.BepInEx;
+namespace DearImGuiInjection;
 
 internal class BepInExLog : ILog
 {

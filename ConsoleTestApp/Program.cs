@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using Logger;
 using NativeMemory;
 using PortableExecutable;
 

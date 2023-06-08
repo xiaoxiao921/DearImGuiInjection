@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using DearImguiSharp;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -45,7 +46,12 @@ internal static class ImGuiDXGI
 
         if (!DearImGuiInjection.Initialized)
         {
-            Log.Info($"[DX11 Present] Init DX11, Window Handle: {windowHandle:X}");
+            DearImGuiInjection.Context = ImGui.CreateContext(null);
+
+            DearImGuiInjection.IO = ImGui.GetIO();
+
+            DearImGuiInjection.IO.ConfigFlags |= (int)ImGuiConfigFlags.ViewportsEnable;
+
             InitializeWithHandle(windowHandle);
 
             using var device = swapChain.GetDevice<Device>();
@@ -68,13 +74,79 @@ internal static class ImGuiDXGI
             if (_windowHandle == IntPtr.Zero)
                 return;
 
-            Log.Info($"[ImguiHook] Init with Window Handle {(long)_windowHandle:X}");
+            Log.Info($"ImGuiImplWin32Init, Window Handle: {windowHandle:X}");
             ImGui.ImGuiImplWin32Init(_windowHandle);
 
-            // todo
-            // https://github.com/Sewer56/Reloaded.Imgui.Hook/blob/master/Reloaded.Imgui.Hook/ImguiHook.cs#L235
-            //var wndProcHandlerPtr = (IntPtr)SDK.Hooks.Utilities.GetFunctionPointer(typeof(ImguiHook), nameof(WndProcHandler));
-            //WndProcHook = WndProcHook.Create(_windowHandle, Unsafe.As<IntPtr, WndProcHook.WndProc>(ref wndProcHandlerPtr));
+            var origWindowProc = GetWindowLongPtr(windowHandle, GWL_WNDPROC);
+            var wndProcHandlerPtr = Marshal.GetFunctionPointerForDelegate(new WndProcDelegate(WndProcHandler));
+            _original = SetWindowLongPtr64(windowHandle, GWL_WNDPROC, wndProcHandlerPtr);
+        }
+    }
+
+    private static IntPtr _original;
+    private const int GWL_WNDPROC = -4;
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+    private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+    private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("user32.dll")]
+    static extern IntPtr CallWindowProc(IntPtr previousWindowProc, IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate IntPtr WndProcDelegate(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    static extern bool GetCursorPos(out POINT point);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    static extern bool SetCursorPos(int x, int y);
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct POINT
+    {
+        public Int32 X;
+        public Int32 Y;
+    }
+
+    private static POINT cursor_coords;
+    private static unsafe IntPtr WndProcHandler(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam)
+    {
+        ImGui.ImplWin32_WndProcHandler((void*)windowHandle, (uint)message, wParam, lParam);
+
+        if (message == WindowMessage.WM_KEYUP && (VirtualKey)wParam == DearImGuiInjection.CursorVisibilityToggle)
+        {
+            if (DearImGuiInjection.IsCursorVisible)
+            {
+                GetCursorPos(out cursor_coords);
+            }
+            else if (cursor_coords.X + cursor_coords.Y != 0)
+            {
+                SetCursorPos(cursor_coords.X, cursor_coords.Y);
+            }
+
+            ToggleCursor();
+        }
+
+        return CallWindowProc(_original, windowHandle, message, wParam, lParam);
+    }
+
+    private static void ToggleCursor()
+    {
+        DearImGuiInjection.IsCursorVisible ^= true;
+
+        var io = DearImGuiInjection.IO;
+        if (DearImGuiInjection.IsCursorVisible)
+        {
+            io.MouseDrawCursor = true;
+            io.ConfigFlags &= ~(int)ImGuiConfigFlags.NoMouse;
+        }
+        else
+        {
+            io.MouseDrawCursor = false;
+            io.ConfigFlags |= (int)ImGuiConfigFlags.NoMouse;
         }
     }
 
@@ -131,7 +203,7 @@ internal static class ImGuiDXGI
         ImGui.EndFrame();
         ImGui.Render();
 
-        if ((ImGui.GetIO().ConfigFlags & (int)ImGuiConfigFlags.ViewportsEnable) > 0)
+        if ((DearImGuiInjection.IO.ConfigFlags & (int)ImGuiConfigFlags.ViewportsEnable) > 0)
         {
             ImGui.UpdatePlatformWindows();
             ImGui.RenderPlatformWindowsDefault(IntPtr.Zero, IntPtr.Zero);

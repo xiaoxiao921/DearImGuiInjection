@@ -5,9 +5,5 @@
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="../Logger/Logger.csproj"/>
-	</ItemGroup>
 	
 </Project>

@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace RendererFinder;
+namespace NativeMemory;
 
 internal static class Log
 {
-    internal const string Prefix = "[RendererFinder] ";
+    internal const string Prefix = "[NativeMemory] ";
 
     internal static void Debug(object data)
     {

@@ -1,11 +1,5 @@
-﻿using System;
-
-namespace RendererFinder;
-
-internal static class Log
+﻿internal static class Log
 {
-    internal const string Prefix = "[RendererFinder] ";
-
     internal static void Debug(object data)
     {
         WriteLine(data, ConsoleColor.White);
@@ -40,7 +34,7 @@ internal static class Log
     {
         Console.ForegroundColor = color;
 
-        Console.WriteLine(Prefix + data);
+        Console.WriteLine(data);
 
         Console.ResetColor();
     }

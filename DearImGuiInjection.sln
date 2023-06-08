@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestApp", "ConsoleTe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CppInterop", "CppInterop\CppInterop.csproj", "{D9AFD4F0-31DE-4261-84FA-260F09E4EE66}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logger", "Logger\Logger.csproj", "{43762C74-9974-4730-AE21-6EE1F5AE69E9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeMemory", "NativeMemory\NativeMemory.csproj", "{FE5437AF-78A5-46F6-ACB5-30F0AA30F014}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortableExecutable", "PortableExecutable\PortableExecutable.csproj", "{9C89F2AD-ACC4-46D6-A64E-161C235FC623}"
@@ -41,10 +39,6 @@ Global
 		{D9AFD4F0-31DE-4261-84FA-260F09E4EE66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9AFD4F0-31DE-4261-84FA-260F09E4EE66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9AFD4F0-31DE-4261-84FA-260F09E4EE66}.Release|Any CPU.Build.0 = Release|Any CPU
-		{43762C74-9974-4730-AE21-6EE1F5AE69E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{43762C74-9974-4730-AE21-6EE1F5AE69E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{43762C74-9974-4730-AE21-6EE1F5AE69E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{43762C74-9974-4730-AE21-6EE1F5AE69E9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FE5437AF-78A5-46F6-ACB5-30F0AA30F014}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FE5437AF-78A5-46F6-ACB5-30F0AA30F014}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE5437AF-78A5-46F6-ACB5-30F0AA30F014}.Release|Any CPU.ActiveCfg = Release|Any CPU

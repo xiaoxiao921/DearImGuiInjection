@@ -15,10 +15,13 @@ internal class DearImguiInjectionBaseUnityPlugin : BaseUnityPlugin
         DearImGuiInjection.Render += DearImGuiInjection_Render;
     }
 
-    private static bool open = true;
     private void DearImGuiInjection_Render()
     {
-        ImGui.ShowDemoWindow(ref open);
+        var dummy = true;
+        if (DearImGuiInjection.IsCursorVisible)
+        {
+            ImGui.ShowDemoWindow(ref dummy);
+        }
     }
 
     private void Update()

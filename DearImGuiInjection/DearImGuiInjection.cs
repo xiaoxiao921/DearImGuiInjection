@@ -1,5 +1,6 @@
 ﻿using System;
 using DearImGuiInjection.Backends;
+using DearImguiSharp;
 using RendererFinder.Renderers;
 
 namespace DearImGuiInjection;
@@ -10,6 +11,20 @@ public static class DearImGuiInjection
     /// True if the injection has been initialized, else false.
     /// </summary>
     public static bool Initialized { get; internal set; }
+
+    public static ImGuiContext Context { get; internal set; }
+
+    public static ImGuiIO IO { get; internal set; }
+
+    /// <summary>
+    /// True if the Dear ImGui GUI cursor is visible
+    /// </summary>
+    public static bool IsCursorVisible { get; internal set; } = true;
+
+    /// <summary>
+    /// Key for switching the cursor visibility.
+    /// </summary>
+    public static VirtualKey CursorVisibilityToggle { get; internal set; } = VirtualKey.Insert;
 
     /// <summary>
     /// User supplied function to render the Dear ImGui UI.
