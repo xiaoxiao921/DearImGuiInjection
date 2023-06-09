@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
 		<PackageReference Include="UnityEngine.Modules" Version="2019.4.26" />
 	</ItemGroup>
 

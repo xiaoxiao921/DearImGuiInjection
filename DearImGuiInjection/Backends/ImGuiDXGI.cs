@@ -56,6 +56,11 @@ internal static class ImGuiDXGI
         {
             DearImGuiInjection.Context = ImGui.CreateContext(null);
 
+            // todo: same font as bepinexgui
+            // todo: make insert key for making cursor visible configurable
+            // todo: imgui.ini file inside bepinex / config
+            // todo: 
+
             DearImGuiInjection.IO = ImGui.GetIO();
 
             InitImGuiWin32(windowHandle);

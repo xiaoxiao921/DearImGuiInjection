@@ -19,7 +19,7 @@ internal static class Log
         _log = log;
     }
 
-#if DEBUG
+#if !DEBUG
     // Stateless for hot reload stuff
     internal static void Debug(object data) => UnityEngine.Debug.Log($"[Debug] {data}");
     internal static void Error(object data) => UnityEngine.Debug.LogError($"[Error] {data}");

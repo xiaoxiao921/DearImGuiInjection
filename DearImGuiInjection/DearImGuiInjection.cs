@@ -19,7 +19,7 @@ public static class DearImGuiInjection
     /// <summary>
     /// True if the Dear ImGui GUI cursor is visible
     /// </summary>
-    public static bool IsCursorVisible { get; internal set; } = true;
+    public static bool IsCursorVisible { get; internal set; } = false;
 
     /// <summary>
     /// Key for switching the cursor visibility.

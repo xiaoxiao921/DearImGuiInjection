@@ -6,6 +6,11 @@ using UnityEngine;
 
 namespace TestPlugin;
 
+public class TestMonoBeh : MonoBehaviour
+{
+    public int A = 4;
+}
+
 [BepInDependency(DearImGuiInjection.Metadata.GUID)]
 [BepInPlugin(Metadata.GUID, Metadata.Name, Metadata.Version)]
 internal class TestPlugin : BaseUnityPlugin
@@ -29,11 +34,32 @@ internal class TestPlugin : BaseUnityPlugin
         UpdateMethod();
     }
 
+
+    private static GameObject goTest;
     private static void UpdateMethod()
     {
         if (Input.GetKey("f3"))
         {
+            Log.Info("WOWEEEEEEEE");
 
+            if (!goTest)
+            {
+                goTest = new GameObject("TestGameObjectReload");
+                var testMonoBeh = goTest.AddComponent<TestMonoBeh>();
+                Log.Info("created goTest, testMonoBeh.A : " + testMonoBeh.A);
+            }
+            else
+            {
+                var testMonoBeh = goTest.GetComponent<TestMonoBeh>();
+                if (testMonoBeh)
+                {
+                    Log.Info("got a goTest, testMonoBeh.A : " + testMonoBeh.A);
+                }
+                else
+                {
+                    Log.Info("got a goTest, but no testMonoBeh");
+                }
+            }
         }
     }
 

@@ -6,6 +6,7 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using Mono.Cecil;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using UnityEngine;
 
@@ -14,9 +15,15 @@ namespace EditAndContinue;
 [BepInPlugin(Metadata.GUID, Metadata.Name, Metadata.Version)]
 internal class EditAndContinue : BaseUnityPlugin
 {
+    const BindingFlags allFlags = (BindingFlags)(-1);
+
     private static List<Hook> Hooks = new();
 
     private static ConfigEntry<string> ReloadKey;
+
+    // needed because otherwise we can't copy over old assembly data state to the new one
+    private static MethodInfo GetValueInternal = typeof(FieldInfo).Assembly.GetType("System.Reflection.MonoField").GetMethod("GetValueInternal", allFlags);
+    private static MethodInfo SetValueInternal = typeof(FieldInfo).Assembly.GetType("System.Reflection.MonoField").GetMethod("SetValueInternal", allFlags);
 
     private void Awake()
     {
@@ -36,14 +43,13 @@ internal class EditAndContinue : BaseUnityPlugin
             var files = Directory.GetFiles(scriptDirectory, "*.dll", SearchOption.AllDirectories);
             if (files.Length > 0)
             {
+                var resolver = new DefaultAssemblyResolver();
+                resolver.AddSearchDirectory(scriptDirectory);
+                resolver.AddSearchDirectory(Paths.ManagedPath);
+                resolver.AddSearchDirectory(Paths.BepInExAssemblyDirectory);
+
                 foreach (string path in Directory.GetFiles(scriptDirectory, "*.dll", SearchOption.AllDirectories))
                 {
-                    var allFlags = (BindingFlags)(-1);
-
-                    var resolver = new DefaultAssemblyResolver();
-                    resolver.AddSearchDirectory(scriptDirectory);
-                    resolver.AddSearchDirectory(Paths.ManagedPath);
-                    resolver.AddSearchDirectory(Paths.BepInExAssemblyDirectory);
 
                     using (var dll = AssemblyDefinition.ReadAssembly(path, new ReaderParameters { AssemblyResolver = resolver }))
                     {
@@ -90,24 +96,90 @@ internal class EditAndContinue : BaseUnityPlugin
 
                             var allOldMethods = oldTypes.SelectMany(t => t.GetMethods(allFlags)).ToArray();
                             var allNewMethods = newTypes.SelectMany(t => t.GetMethods(allFlags)).ToArray();
-                            var count = Math.Min(allOldMethods.Length, allNewMethods.Length);
-                            for (int i = 0; i < count; i++)
+                            var methodCount = Math.Min(allOldMethods.Length, allNewMethods.Length);
+
+                            HashSet<string> restoredTypesStates = new();
+
+                            for (int i = 0; i < methodCount; i++)
                             {
                                 var oldMethod = allOldMethods[i];
-                                for (int j = 0; j < count; j++)
+                                for (int j = 0; j < methodCount; j++)
                                 {
                                     var newMethod = allNewMethods[j];
                                     try
                                     {
                                         if (oldMethod.DeclaringType.FullName == newMethod.DeclaringType.FullName && oldMethod.Name == newMethod.Name)
                                         {
+                                            if (!restoredTypesStates.Contains(oldMethod.DeclaringType.FullName))
+                                            {
+                                                restoredTypesStates.Add(oldMethod.DeclaringType.FullName);
+
+                                                try
+                                                {
+                                                    foreach (var oldTypeField in oldMethod.DeclaringType.GetFields(allFlags))
+                                                    {
+                                                        foreach (var newTypeField in newMethod.DeclaringType.GetFields(allFlags))
+                                                        {
+                                                            if (oldTypeField.IsStatic && oldTypeField.Name == newTypeField.Name)
+                                                            {
+                                                                object staticField = null;
+                                                                var oldTypeFieldValue = GetValueInternal.Invoke(oldTypeField, new object[] { staticField });
+                                                                SetValueInternal.Invoke(staticField, new object[] { newTypeField, staticField, oldTypeFieldValue });
+                                                                // equivalent to
+                                                                //newTypeField.SetValue(null, oldTypeField.GetValue(null));
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                catch (Exception e)
+                                                {
+                                                    Log.Warning(e);
+                                                }
+                                            }
+
+                                            static void FixUpRefs(ILContext il)
+                                            {
+                                                var c = new ILCursor(il);
+
+                                                foreach (var instruction in c.Instrs)
+                                                {
+                                                    if (instruction.Operand == null)
+                                                    {
+                                                        continue;
+                                                    }
+
+                                                    if (instruction.Operand.GetType() == typeof(GenericInstanceMethod))
+                                                    {
+                                                        var methodRef = (MethodReference)instruction.Operand;
+
+                                                        for (int i = 0; i < methodRef.GenericParameters.Count; i++)
+                                                        {
+                                                            var oldGenericParam = methodRef.GenericParameters[i];
+                                                            //oldGenericParam.decl
+                                                            //var newGenericParam = new GenericParameter()
+                                                        }
+
+                                                        //var m = typeof(GameObject).GetMethods(allFlags).First(m => m.IsGenericMethod && m.Name == nameof(GetComponent)).MakeGenericMethod(typeof(TestComp));
+                                                        //var gm = il.Import(m);
+                                                        //gm.GenericParameters.Add(new GenericParameter("T", gm));
+
+                                                        instruction.Operand = methodRef;
+                                                    }
+                                                }
+                                            }
+
+                                            // todo: fix up type refs so that things like GetComponent<TypeFromOldAssembly>()
+                                            // still work even after hot reloading
+                                            //new ILHook(newMethod, FixUpRefs);
+
                                             Hooks.Add(new Hook(oldMethod, newMethod));
                                             break;
                                         }
                                     }
                                     catch (Exception e)
                                     {
-                                        //Log.Error(e);
+                                        Log.Error(e);
                                     }
                                 }
                             }
