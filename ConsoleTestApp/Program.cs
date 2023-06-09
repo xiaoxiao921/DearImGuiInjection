@@ -25,7 +25,7 @@ if (peReader == null)
 }
 var dxgiPdbReader = new PdbReader(peReader);
 
-var cacheDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UnityMod.DearImGui", "pdb");
+var cacheDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DearImGuiInjection", "pdb");
 dxgiPdbReader.FindOrDownloadPdb(cacheDirectoryPath);
 
 var swapChainPresentFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::Present\0") });

@@ -40,6 +40,8 @@ internal static class ImGuiDXGI
 
         SetWindowLongPtr64(_windowHandle, GWL_WNDPROC, _originalWindowProc);
 
+        ImGui.ImGuiImplWin32Shutdown();
+
         _renderTargetView = null;
 
         Log.Info("ImGui.ImGuiImplDX11Shutdown()");
@@ -54,14 +56,9 @@ internal static class ImGuiDXGI
 
         if (!DearImGuiInjection.Initialized)
         {
-            DearImGuiInjection.Context = ImGui.CreateContext(null);
+            DearImGuiInjection.InitImGui();
 
-            // todo: same font as bepinexgui
             // todo: make insert key for making cursor visible configurable
-            // todo: imgui.ini file inside bepinex / config
-            // todo: 
-
-            DearImGuiInjection.IO = ImGui.GetIO();
 
             InitImGuiWin32(windowHandle);
 

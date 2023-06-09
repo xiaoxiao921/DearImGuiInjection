@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using BepInEx;
+using DearImGuiInjection;
+using DearImGuiInjection.BepInEx;
 using DearImguiSharp;
 using MonoMod.RuntimeDetour;
 using UnityEngine;
@@ -104,9 +106,22 @@ internal class TestPlugin : BaseUnityPlugin
         if (_isMyUIOpen)
         {
             var dummy2 = true;
-            ImGui.Begin(Metadata.GUID, ref dummy2, (int)ImGuiWindowFlags.None);
+            if (ImGui.Begin(Metadata.GUID, ref dummy2, (int)ImGuiWindowFlags.None))
+            {
+                ImGui.Text("hello there");
 
-            ImGui.Text("hello there");
+
+                if (ImGui.Button("Click me", Constants.DefaultVector2))
+                {
+                    // Interacting with the unity api must be done from the unity main thread
+                    // Can just use the dispatcher shipped with the library for that
+                    UnityMainThreadDispatcher.Enqueue(() =>
+                    {
+                        //var go = new GameObject();
+                        //go.AddComponent<Stuff>();
+                    });
+                }
+            }
 
             ImGui.End();
         }

@@ -47,15 +47,15 @@ public class DXGIRenderer : IRenderer
             return false;
         }
 
-        var peReader = PEReader.FromFilePath(dxgiModule.FileName);
-        if (peReader == null)
+        var dxgiDllPeReader = PEReader.FromFilePath(dxgiModule.FileName);
+        if (dxgiDllPeReader == null)
         {
             return false;
         }
 
-        var dxgiPdbReader = new PdbReader(peReader);
+        var dxgiPdbReader = new PdbReader(dxgiDllPeReader);
 
-        var cacheDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UnityMod.DearImGui", "pdb");
+        var cacheDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DearImGuiInjection", "pdb");
         dxgiPdbReader.FindOrDownloadPdb(cacheDirectoryPath);
 
         var swapChainPresentFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::Present\0") });

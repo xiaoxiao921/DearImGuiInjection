@@ -94,7 +94,9 @@ public class PdbReader
             fileStream.Write(copyBuffer, 0, blockSize);
         }
 
-        _pdbFileBytes = File.ReadAllBytes(pdbFilePath);
+        _pdbFileBytes = new byte[fileStream.Length];
+        fileStream.Position = 0;
+        fileStream.Read(_pdbFileBytes, 0, (int)fileStream.Length);
 
         return true;
     }
