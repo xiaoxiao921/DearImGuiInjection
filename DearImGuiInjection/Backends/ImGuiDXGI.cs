@@ -125,7 +125,7 @@ internal static class ImGuiDXGI
     {
         ImGui.ImplWin32_WndProcHandler((void*)windowHandle, (uint)message, wParam, lParam);
 
-        if (message == WindowMessage.WM_KEYUP && (VirtualKey)wParam == DearImGuiInjection.CursorVisibilityToggle)
+        if (message == WindowMessage.WM_KEYUP && (VirtualKey)wParam == DearImGuiInjection.CursorVisibilityToggle.Get())
         {
             SaveOrRestoreCursorPosition();
 

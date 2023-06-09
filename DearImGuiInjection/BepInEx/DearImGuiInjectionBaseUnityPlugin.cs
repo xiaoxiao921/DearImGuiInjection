@@ -1,5 +1,6 @@
 using System.IO;
 using BepInEx;
+using DearImGuiInjection.Backends;
 
 namespace DearImGuiInjection.BepInEx;
 
@@ -10,7 +11,15 @@ internal class DearImGuiInjectionBaseUnityPlugin : BaseUnityPlugin
     {
         Log.Init(new BepInExLog(Logger));
 
-        DearImGuiInjection.Init(Paths.ConfigPath, Path.Combine(Path.GetDirectoryName(Info.Location), "Assets"));
+        var imguiIniConfigDirectoryPath = Paths.ConfigPath;
+
+        var assetsFolder = Path.Combine(Path.GetDirectoryName(Info.Location), "Assets");
+
+        var cursorVisibilityConfig = new BepInExConfigEntry<VirtualKey>(
+            Config.Bind("Keybinds", "CursorVisibility",
+            DearImGuiInjection.CursorVisibilityToggleDefault,
+            "Key for switching the cursor visibility."));
+        DearImGuiInjection.Init(imguiIniConfigDirectoryPath, assetsFolder, cursorVisibilityConfig);
 
         gameObject.AddComponent<UnityMainThreadDispatcher>();
     }

@@ -31,7 +31,8 @@ public static class DearImGuiInjection
     /// <summary>
     /// Key for switching the cursor visibility.
     /// </summary>
-    public static VirtualKey CursorVisibilityToggle { get; internal set; } = VirtualKey.Insert;
+    public static IConfigEntry<VirtualKey> CursorVisibilityToggle { get; internal set; }
+    internal const VirtualKey CursorVisibilityToggleDefault = VirtualKey.Insert;
 
     public static ImGuiStyle Style { get; private set; }
 
@@ -41,12 +42,13 @@ public static class DearImGuiInjection
     public static event Action Render { add { RenderAction += value; } remove { RenderAction -= value; } }
     internal static Action RenderAction;
 
-    internal static void Init(string imguiIniConfigDirectoryPath, string assetsFolder)
+    internal static void Init(string imguiIniConfigDirectoryPath, string assetsFolder, IConfigEntry<VirtualKey> cursorVisibilityConfig)
     {
         if (RendererFinder.RendererFinder.Init())
         {
             ImGuiIniConfigPath = Path.Combine(imguiIniConfigDirectoryPath, IniFileName);
             AssetsFolderPath = assetsFolder;
+            CursorVisibilityToggle = cursorVisibilityConfig;
 
             InitImplementationFromRendererKind(RendererFinder.RendererFinder.RendererKind);
         }
