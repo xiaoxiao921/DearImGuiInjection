@@ -19,6 +19,12 @@ public class PdbReader
 
     public bool FindOrDownloadPdb(string cacheDirectoryFullPath)
     {
+        if (string.IsNullOrWhiteSpace(_target.RsdsPdbFileName))
+        {
+            Log.Error("string.IsNullOrWhiteSpace(_target.RsdsPdbFileName)");
+            return false;
+        }
+
         // create the cache directory if needed
         var cacheDirectory = Directory.CreateDirectory(cacheDirectoryFullPath);
 
