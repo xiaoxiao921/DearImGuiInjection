@@ -8,7 +8,9 @@
 
 	<ItemGroup>
 	  <PackageReference Include="MonoMod.RuntimeDetour" Version="22.1.29.1" />
-	  <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+      <PackageReference Include="netstandard2.0.SharpDX" Version="4.2.1-beta0-g7abb72df54" />
+      <PackageReference Include="netstandard2.0.SharpDX.DXGI" Version="4.2.1-beta0-g7abb72df54" />
+      <PackageReference Include="netstandard2.0.SharpDX.Direct3D11" Version="4.2.1-beta0-g7abb72df54" />
 	</ItemGroup>
 
 	<ItemGroup>
