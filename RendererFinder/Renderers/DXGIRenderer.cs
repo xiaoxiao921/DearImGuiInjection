@@ -1,15 +1,46 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
+using CppInterop;
 using MonoMod.RuntimeDetour;
-using NativeMemory;
-using PortableExecutable;
+using SharpDX.Direct3D;
+using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using Device = SharpDX.Direct3D11.Device;
 
 namespace RendererFinder.Renderers;
+
+/// <summary>
+/// Contains a full list of IDXGISwapChain functions to be used
+/// as an indexer into the SwapChain Virtual Function Table entries.
+/// </summary>
+public enum IDXGISwapChain
+{
+    // IUnknown
+    QueryInterface = 0,
+    AddRef = 1,
+    Release = 2,
+
+    // IDXGIObject
+    SetPrivateData = 3,
+    SetPrivateDataInterface = 4,
+    GetPrivateData = 5,
+    GetParent = 6,
+
+    // IDXGIDeviceSubObject
+    GetDevice = 7,
+
+    // IDXGISwapChain
+    Present = 8,
+    GetBuffer = 9,
+    SetFullscreenState = 10,
+    GetFullscreenState = 11,
+    GetDesc = 12,
+    ResizeBuffers = 13,
+    ResizeTarget = 14,
+    GetContainingOutput = 15,
+    GetFrameStatistics = 16,
+    GetLastPresentCount = 17,
+}
 
 public class DXGIRenderer : IRenderer
 {
@@ -34,37 +65,27 @@ public class DXGIRenderer : IRenderer
 
     public bool Init()
     {
-        var dxgiModule = Process.GetCurrentProcess().Modules.Cast<ProcessModule>().FirstOrDefault(p => p?.ModuleName != null && p.ModuleName.ToLowerInvariant().Contains("dxgi"));
-        if (dxgiModule == null)
+        var windowHandle = Windows.User32.CreateFakeWindow();
+
+        var desc = new SwapChainDescription()
         {
-            Log.Error("dxgiModule == null");
-            return false;
-        }
+            BufferCount = 1,
+            ModeDescription = new ModeDescription(500, 300, new Rational(60, 1), Format.R8G8B8A8_UNorm),
+            IsWindowed = true,
+            OutputHandle = windowHandle,
+            SampleDescription = new SampleDescription(1, 0),
+            Usage = Usage.RenderTargetOutput
+        };
 
-        if (string.IsNullOrWhiteSpace(dxgiModule.FileName))
-        {
-            Log.Error("string.IsNullOrWhiteSpace(dxgiModule.FileName)");
-            return false;
-        }
+        Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.None, desc, out var dx11Device, out var dxgiSwapChain);
+        var DXGIVTable = VirtualFunctionTable.FromObject(dxgiSwapChain.NativePointer, Enum.GetNames(typeof(IDXGISwapChain)).Length);
+        var swapChainPresentFunctionPtr = DXGIVTable.TableEntries[(int)IDXGISwapChain.Present].FunctionPointer;
+        var swapChainResizeBuffersFunctionPtr = DXGIVTable.TableEntries[(int)IDXGISwapChain.ResizeBuffers].FunctionPointer;
 
-        var dxgiDllPeReader = PEReader.FromFilePath(dxgiModule.FileName);
-        if (dxgiDllPeReader == null)
-        {
-            return false;
-        }
+        dxgiSwapChain.Dispose();
+        dx11Device.Dispose();
 
-        var dxgiPdbReader = new PdbReader(dxgiDllPeReader);
-
-        var cacheDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DearImGuiInjection", "pdb");
-        dxgiPdbReader.FindOrDownloadPdb(cacheDirectoryPath);
-
-        var swapChainPresentFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::Present\0") });
-        if (swapChainPresentFunctionOffset == IntPtr.Zero)
-        {
-            Log.Error("swapChainPresentFunctionOffset == IntPtr.Zero");
-            return false;
-        }
-        var swapChainPresentFunctionPtr = dxgiModule.BaseAddress.Add(swapChainPresentFunctionOffset);
+        Windows.User32.DestroyWindow(windowHandle);
 
         _detourPresent = new NativeDetour(
             swapChainPresentFunctionPtr,
@@ -72,14 +93,6 @@ public class DXGIRenderer : IRenderer
             new NativeDetourConfig { ManualApply = true });
         _originalPresent = _detourPresent.GenerateTrampoline<CDXGISwapChainPresentDelegate>();
         _detourPresent.Apply();
-
-        var swapChainResizeBuffersFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::ResizeBuffers\0") });
-        if (swapChainResizeBuffersFunctionOffset == IntPtr.Zero)
-        {
-            Log.Error("swapChainResizeBuffersFunctionOffset == IntPtr.Zero");
-            return false;
-        }
-        var swapChainResizeBuffersFunctionPtr = dxgiModule.BaseAddress.Add(swapChainResizeBuffersFunctionOffset);
 
         _detourResizeBuffers = new NativeDetour(
             swapChainResizeBuffersFunctionPtr,
@@ -93,6 +106,9 @@ public class DXGIRenderer : IRenderer
 
     public void Dispose()
     {
+        _detourResizeBuffers.Dispose();
+        _originalResizeBuffers = null;
+
         _detourPresent.Dispose();
         _originalPresent = null;
 

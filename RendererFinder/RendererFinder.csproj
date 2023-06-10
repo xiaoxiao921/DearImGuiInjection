@@ -13,7 +13,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="../NativeMemory/NativeMemory.csproj" />
-		<ProjectReference Include="../PortableExecutable/PortableExecutable.csproj" />
+		<ProjectReference Include="../CppInterop/CppInterop.csproj" />
 	</ItemGroup>
 
 </Project>
