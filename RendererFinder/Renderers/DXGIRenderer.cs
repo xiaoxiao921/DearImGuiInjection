@@ -117,7 +117,7 @@ public class DXGIRenderer : IRenderer
 
     private static IntPtr SwapChainPresentHook(IntPtr self, uint syncInterval, uint flags)
     {
-        using var swapChain = new SwapChain(self);
+        var swapChain = new SwapChain(self);
 
         if (_onPresentAction != null)
         {
@@ -139,7 +139,7 @@ public class DXGIRenderer : IRenderer
 
     private IntPtr SwapChainResizeBuffersHook(IntPtr swapchainPtr, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
     {
-        using var swapChain = new SwapChain(swapchainPtr);
+        var swapChain = new SwapChain(swapchainPtr);
 
         if (_preResizeBuffers != null)
         {
