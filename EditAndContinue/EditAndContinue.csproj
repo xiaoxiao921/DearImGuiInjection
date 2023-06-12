@@ -1,15 +1,57 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<PlatformTarget>AnyCPU</PlatformTarget>
 		<LangVersion>preview</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Configurations>netstandard2.0;net46;net6</Configurations>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
-		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
-		<PackageReference Include="UnityEngine.Modules" Version="2019.4.26" />
+		<PackageReference Include="MonoMod.RuntimeDetour" Version="22.1.29.1" />
 	</ItemGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='netstandard2.0'">
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>EditAndContinue.netstandard2.0</AssemblyName>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='net46'">
+		<TargetFramework>net46</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>EditAndContinue.net46</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0' or '$(Configuration)'=='net46'">
+		<Reference Include="BepInEx">
+			<HintPath>..\lib\net35\BepInEx.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="BepInEx.Core">
+			<HintPath>..\libs\net35\BepInEx.Core.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="BepInEx.Unity">
+			<HintPath>..\libs\net35\BepInEx.Unity.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine">
+			<HintPath>..\libs\net35\UnityEngine.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>..\libs\net35\UnityEngine.UI.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='net6'">
+		<TargetFramework>net6</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>EditAndContinue.net6</AssemblyName>
+	</PropertyGroup>
 
 </Project>

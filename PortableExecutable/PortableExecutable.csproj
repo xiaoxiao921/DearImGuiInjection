@@ -1,10 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<LangVersion>preview</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Configurations>netstandard2.0;net46;net6</Configurations>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='netstandard2.0'">
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>PortableExecutable.netstandard2.0</AssemblyName>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='net46'">
+		<TargetFramework>net46</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>PortableExecutable.net46</AssemblyName>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='net6'">
+		<TargetFramework>net6</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>PortableExecutable.net6</AssemblyName>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="../NativeMemory/NativeMemory.csproj" />
