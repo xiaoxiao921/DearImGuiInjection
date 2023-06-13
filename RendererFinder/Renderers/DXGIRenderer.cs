@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using CppInterop;
 using MonoMod.RuntimeDetour;
@@ -44,8 +45,14 @@ public enum IDXGISwapChain
 
 public class DXGIRenderer : IRenderer
 {
+    // https://github.com/BepInEx/BepInEx/blob/master/Runtimes/Unity/BepInEx.Unity.IL2CPP/Hook/INativeDetour.cs#L54
+    // Workaround for CoreCLR collecting all delegates
+    private static List<object> _cache = new();
+
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     private delegate IntPtr CDXGISwapChainPresentDelegate(IntPtr self, uint syncInterval, uint flags);
+
+    private static CDXGISwapChainPresentDelegate _swapchainpresenthookdelegate;
     private static NativeDetour _detourPresent;
     private static CDXGISwapChainPresentDelegate _originalPresent;
 
@@ -56,6 +63,7 @@ public class DXGIRenderer : IRenderer
     private delegate IntPtr CDXGISwapChainResizeBuffersDelegate(IntPtr self, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags);
     private static NativeDetour _detourResizeBuffers;
     private static CDXGISwapChainResizeBuffersDelegate _originalResizeBuffers;
+    private CDXGISwapChainResizeBuffersDelegate _swapchainresizebufferhookdelegate;
 
     public static event Action<SwapChain, uint, uint, uint, Format, uint> PreResizeBuffers { add { _preResizeBuffers += value; } remove { _preResizeBuffers -= value; } }
     private static event Action<SwapChain, uint, uint, uint, Format, uint> _preResizeBuffers;
@@ -87,18 +95,28 @@ public class DXGIRenderer : IRenderer
 
         Windows.User32.DestroyWindow(windowHandle);
 
+        _swapchainpresenthookdelegate = new CDXGISwapChainPresentDelegate(SwapChainPresentHook);
+        _cache.Add(_swapchainpresenthookdelegate);
+
         _detourPresent = new NativeDetour(
             swapChainPresentFunctionPtr,
-            Marshal.GetFunctionPointerForDelegate(new CDXGISwapChainPresentDelegate(SwapChainPresentHook)),
+            Marshal.GetFunctionPointerForDelegate(_swapchainpresenthookdelegate),
             new NativeDetourConfig { ManualApply = true });
         _originalPresent = _detourPresent.GenerateTrampoline<CDXGISwapChainPresentDelegate>();
+        _cache.Add(_detourPresent);
+        _cache.Add(_originalPresent);
         _detourPresent.Apply();
+
+        _swapchainresizebufferhookdelegate = new CDXGISwapChainResizeBuffersDelegate(SwapChainResizeBuffersHook);
+        _cache.Add(_swapchainresizebufferhookdelegate);
 
         _detourResizeBuffers = new NativeDetour(
             swapChainResizeBuffersFunctionPtr,
-            Marshal.GetFunctionPointerForDelegate(new CDXGISwapChainResizeBuffersDelegate(SwapChainResizeBuffersHook)),
+            Marshal.GetFunctionPointerForDelegate(_swapchainresizebufferhookdelegate),
             new NativeDetourConfig { ManualApply = true });
         _originalResizeBuffers = _detourResizeBuffers.GenerateTrampoline<CDXGISwapChainResizeBuffersDelegate>();
+        _cache.Add(_detourResizeBuffers);
+        _cache.Add(_originalResizeBuffers);
         _detourResizeBuffers.Apply();
 
         return true;

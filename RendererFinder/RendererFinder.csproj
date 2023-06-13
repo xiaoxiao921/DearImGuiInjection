@@ -8,31 +8,17 @@
 		<Configurations>netstandard2.0;net46;net6</Configurations>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="MonoMod.RuntimeDetour" Version="22.1.29.1" />
-	</ItemGroup>
-
 	<PropertyGroup Condition="'$(Configuration)'=='netstandard2.0'">
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
 		<AssemblyName>RendererFinder.netstandard2.0</AssemblyName>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0'">
-		<PackageReference Include="netstandard2.0.SharpDX" Version="4.2.1-beta0-g7abb72df54" />
-		<PackageReference Include="netstandard2.0.SharpDX.DXGI" Version="4.2.1-beta0-g7abb72df54" />
-		<PackageReference Include="netstandard2.0.SharpDX.Direct3D11" Version="4.2.1-beta0-g7abb72df54" />
-	</ItemGroup>
-
 	<PropertyGroup Condition="'$(Configuration)'=='net46'">
 		<TargetFramework>net46</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
 		<AssemblyName>RendererFinder.net46</AssemblyName>
 	</PropertyGroup>
-
-	<ItemGroup Condition="'$(Configuration)'!='netstandard2.0'">
-		<PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
-	</ItemGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='net6'">
 		<TargetFramework>net6</TargetFramework>
@@ -41,8 +27,24 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="MonoMod.RuntimeDetour" Version="22.5.1.1" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="../NativeMemory/NativeMemory.csproj" />
 		<ProjectReference Include="../CppInterop/CppInterop.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0' or '$(Configuration)'=='net6'">
+		<PackageReference Include="netstandard2.0.SharpDX" Version="4.2.1-beta0-g7abb72df54" />
+		<PackageReference Include="netstandard2.0.SharpDX.DXGI" Version="4.2.1-beta0-g7abb72df54" />
+		<PackageReference Include="netstandard2.0.SharpDX.Direct3D11" Version="4.2.1-beta0-g7abb72df54" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='net46'">
+		<PackageReference Include="SharpDX" Version="4.2.0" />
+		<PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
+		<PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
 	</ItemGroup>
 
 </Project>

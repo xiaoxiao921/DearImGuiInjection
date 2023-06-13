@@ -26,6 +26,10 @@
 		<AssemblyName>PortableExecutable.net6</AssemblyName>
 	</PropertyGroup>
 
+	<ItemGroup Condition="'$(Configuration)'=='net46'">
+	  <PackageReference Include="System.Net.Http" Version="4.3.4" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="../NativeMemory/NativeMemory.csproj" />
 	</ItemGroup>

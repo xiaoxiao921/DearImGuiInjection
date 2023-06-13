@@ -1,4 +1,16 @@
 ﻿using System.Diagnostics;
+
+ProcessStartInfo procStartInfo = new ProcessStartInfo();
+procStartInfo.FileName = "dotnet";
+procStartInfo.Arguments = "";
+procStartInfo.UseShellExecute = false;
+procStartInfo.CreateNoWindow = false;
+procStartInfo.RedirectStandardOutput = true;
+procStartInfo.RedirectStandardError = true;
+
+//new
+
+/*using System.Diagnostics;
 using System.Text;
 using NativeMemory;
 using PortableExecutable;
@@ -28,4 +40,4 @@ var dxgiPdbReader = new PdbReader(peReader);
 var cacheDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DearImGuiInjection", "pdb");
 dxgiPdbReader.FindOrDownloadPdb(cacheDirectoryPath);
 
-var swapChainPresentFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::Present\0") });
+var swapChainPresentFunctionOffset = dxgiPdbReader.FindFunctionOffset(new BytePattern[] { Encoding.ASCII.GetBytes("CDXGISwapChain::Present\0") });*/

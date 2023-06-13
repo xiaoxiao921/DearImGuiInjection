@@ -12,7 +12,7 @@ internal static class ImGuiDXGI
     private static IntPtr _windowHandle;
 
     private static RenderTargetView _renderTargetView;
-
+    private static WndProcDelegate _myWindowProc;
     private static IntPtr _originalWindowProc;
     private const int GWL_WNDPROC = -4;
 
@@ -83,7 +83,8 @@ internal static class ImGuiDXGI
             Log.Info($"ImGuiImplWin32Init, Window Handle: {windowHandle:X}");
             ImGui.ImGuiImplWin32Init(_windowHandle);
 
-            _originalWindowProc = SetWindowLongPtr64(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(new WndProcDelegate(WndProcHandler)));
+            _myWindowProc = new WndProcDelegate(WndProcHandler);
+            _originalWindowProc = SetWindowLongPtr64(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_myWindowProc));
         }
     }
 

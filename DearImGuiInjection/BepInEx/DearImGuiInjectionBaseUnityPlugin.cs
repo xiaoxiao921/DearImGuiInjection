@@ -1,3 +1,5 @@
+#if NETSTANDARD2_0 || NET46
+
 using System;
 using System.IO;
 using System.Linq;
@@ -67,3 +69,5 @@ internal class DearImGuiInjectionBaseUnityPlugin : BaseUnityPlugin
         DearImGuiInjection.Dispose();
     }
 }
+
+#endif

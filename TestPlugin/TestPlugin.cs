@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿#if NETSTANDARD2_0 || NET46
+
+using System.Collections.Generic;
 using BepInEx;
 using DearImGuiInjection;
 using DearImGuiInjection.BepInEx;
@@ -132,3 +134,125 @@ internal class TestPlugin : BaseUnityPlugin
         DearImGuiInjection.DearImGuiInjection.Render -= MyUI;
     }
 }
+
+#else
+
+using System;
+using System.Collections.Generic;
+using BepInEx;
+using BepInEx.Logging;
+using BepInEx.Unity.IL2CPP;
+using BepInEx.Unity.IL2CPP.UnityEngine;
+using DearImGuiInjection;
+using DearImguiSharp;
+using MonoMod.RuntimeDetour;
+using UnityEngine;
+
+namespace TestPlugin;
+
+public class TestPluginBehaviour : MonoBehaviour
+{
+    public TestPluginBehaviour(IntPtr ptr) : base(ptr) { }
+
+    private void Update()
+    {
+        UpdateMethod();
+    }
+
+    private static GameObject goTest;
+    private static void UpdateMethod()
+    {
+        if (Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.F3))
+        {
+            Log.Info("WOWEEEEEEEE");
+        }
+    }
+}
+
+internal static class LogInitier
+{
+    internal static void Init(ManualLogSource log)
+    {
+        Log.Init(new BepInExLog(log));
+    }
+}
+
+[BepInDependency(DearImGuiInjection.Metadata.GUID)]
+[BepInPlugin(Metadata.GUID, Metadata.Name, Metadata.Version)]
+internal class TestPlugin : BasePlugin
+{
+    private static bool _isMyUIOpen = true;
+
+    private static List<Hook> Hooks = new();
+
+    public override void Load()
+    {
+        LogInitier.Init(Log);
+
+        DearImGuiInjection.DearImGuiInjection.Render += MyUI;
+    }
+
+    private static void MyUI()
+    {
+        if (DearImGuiInjection.DearImGuiInjection.IsCursorVisible)
+        {
+            var dummy = true;
+            ImGui.ShowDemoWindow(ref dummy);
+
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("MainBar", true))
+                {
+                    if (ImGui.MenuItemBool("MyTestPlugin", null, false, true))
+                    {
+                        _isMyUIOpen ^= true;
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMainMenuBar();
+            }
+
+            if (ImGui.BeginMainMenuBar())
+            {
+                if (ImGui.BeginMenu("MainBar", true))
+                {
+                    if (ImGui.MenuItemBool("MyTestPlugin2", null, false, true))
+                    {
+                        _isMyUIOpen ^= true;
+                    }
+
+                    ImGui.EndMenu();
+                }
+
+                ImGui.EndMainMenuBar();
+            }
+        }
+
+        if (_isMyUIOpen)
+        {
+            var dummy2 = true;
+            if (ImGui.Begin(Metadata.GUID, ref dummy2, (int)ImGuiWindowFlags.None))
+            {
+                ImGui.Text("hello there");
+
+
+                if (ImGui.Button("Click me", Constants.DefaultVector2))
+                {
+                    // Interacting with the unity api must be done from the unity main thread
+                    // Can just use the dispatcher shipped with the library for that
+                    UnityMainThreadDispatcher.Enqueue(() =>
+                    {
+                        //var go = new GameObject();
+                        //go.AddComponent<Stuff>();
+                    });
+                }
+            }
+
+            ImGui.End();
+        }
+    }
+}
+
+#endif

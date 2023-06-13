@@ -1,42 +1,40 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
+	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<PlatformTarget>AnyCPU</PlatformTarget>
-        <LangVersion>preview</LangVersion>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>preview</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Configurations>netstandard2.0;net46;net6</Configurations>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="MonoMod.RuntimeDetour" Version="22.1.29.1" />
-	</ItemGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='netstandard2.0'">
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
 		<AssemblyName>TestPlugin.netstandard2.0</AssemblyName>
+		<DefineConstants>NETSTANDARD2_0</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='net46'">
 		<TargetFramework>net46</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
 		<AssemblyName>TestPlugin.net46</AssemblyName>
+		<DefineConstants>NET46</DefineConstants>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)'=='net6'">
+		<TargetFramework>net6</TargetFramework>
+		<OutputPath>../bin/</OutputPath>
+		<AssemblyName>TestPlugin.net6</AssemblyName>
+		<DefineConstants>NET6</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="../DearImGuiInjection/DearImGuiInjection.csproj" />
+	</ItemGroup>
+
 	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0' or '$(Configuration)'=='net46'">
-		<Reference Include="BepInEx">
-			<HintPath>..\lib\net35\BepInEx.dll</HintPath>
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="BepInEx.Core">
-			<HintPath>..\libs\net35\BepInEx.Core.dll</HintPath>
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="BepInEx.Unity">
-			<HintPath>..\libs\net35\BepInEx.Unity.dll</HintPath>
-			<Private>False</Private>
-		</Reference>
+		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
 
 		<Reference Include="UnityEngine">
 			<HintPath>..\libs\net35\UnityEngine.dll</HintPath>
@@ -48,20 +46,58 @@
 		</Reference>
 	</ItemGroup>
 
-	<PropertyGroup Condition="'$(Configuration)'=='net6'">
-		<TargetFramework>net6</TargetFramework>
-		<OutputPath>../bin/</OutputPath>
-		<AssemblyName>TestPlugin.net6</AssemblyName>
-	</PropertyGroup>
+	<ItemGroup Condition="'$(Configuration)'=='net6'">
+		<PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be*" PrivateAssets="all" />
 
-	<ItemGroup>
-        <ProjectReference Include="../DearImGuiInjection/DearImGuiInjection.csproj" />
-    </ItemGroup>
+		<Reference Include="Il2Cppmscorlib">
+			<HintPath>..\libs\net6\Il2Cppmscorlib.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 
-    <ItemGroup>
-      <Reference Include="DearImguiSharp">
-        <HintPath>../libs/DearImguiSharp.dll</HintPath>
-      </Reference>
-    </ItemGroup>
+		<Reference Include="UnityEngine">
+			<HintPath>..\libs\net6\UnityEngine.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AudioModule">
+			<HintPath>..\libs\net6\UnityEngine.AudioModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>..\libs\net6\UnityEngine.CoreModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.PhysicsModule">
+			<HintPath>..\libs\net6\UnityEngine.PhysicsModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.TextRenderingModule">
+			<HintPath>..\libs\net6\UnityEngine.TextRenderingModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>..\libs\net6\UnityEngine.UI.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.UIModule">
+			<HintPath>..\libs\net6\UnityEngine.UIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.IMGUIModule">
+			<HintPath>..\libs\net6\UnityEngine.IMGUIModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0' or '$(Configuration)'=='net6'">
+		<Reference Include="DearImguiSharp">
+			<HintPath>../libs/netstandard2.0/DearImguiSharp.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)'=='net46'">
+		<Reference Include="DearImguiSharp">
+			<HintPath>../libs/net46/DearImguiSharp.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 
 </Project>
