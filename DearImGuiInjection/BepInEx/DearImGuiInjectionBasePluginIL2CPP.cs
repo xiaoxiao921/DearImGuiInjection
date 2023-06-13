@@ -2,10 +2,12 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using DearImGuiInjection.Backends;
+using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -23,8 +25,9 @@ internal static class LogInitier
 [BepInPlugin(Metadata.GUID, Metadata.Name, Metadata.Version)]
 internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
 {
-    private System.Reflection.MethodInfo _eventSystemUpdate;
-    //private Hook _eventSystemUpdateHook;
+    private static Harmony _hooks;
+    private MethodInfo _eventSystemUpdate;
+    private HarmonyMethod _hookIgnoreUIObjectsWhenImGuiCursorIsVisible;
 
     private static GameObject UnityMainThreadDispatcherHolder;
     private static UnityMainThreadDispatcher UnityMainThreadDispatcherInstance;
@@ -57,9 +60,12 @@ internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
     {
         try
         {
-            var allFlags = (System.Reflection.BindingFlags)(-1);
+            var allFlags = (BindingFlags)(-1);
             _eventSystemUpdate = typeof(EventSystem).GetMethod(nameof(EventSystem.Update), allFlags);
-            //_eventSystemUpdateHook = new Hook(_eventSystemUpdate, IgnoreUIObjectsWhenImGuiCursorIsVisible);
+            _hooks = new Harmony(Metadata.GUID);
+            _hookIgnoreUIObjectsWhenImGuiCursorIsVisible =
+                new(typeof(DearImGuiInjectionBasePluginIL2CPP).GetMethod(nameof(IgnoreUIObjectsWhenImGuiCursorIsVisible), allFlags));
+            _hooks.Patch(_eventSystemUpdate, _hookIgnoreUIObjectsWhenImGuiCursorIsVisible);
         }
         catch (Exception e)
         {
@@ -67,14 +73,9 @@ internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
         }
     }
 
-    private static void IgnoreUIObjectsWhenImGuiCursorIsVisible(Action<object> orig, object self)
+    public static bool IgnoreUIObjectsWhenImGuiCursorIsVisible()
     {
-        if (DearImGuiInjection.IsCursorVisible)
-        {
-            return;
-        }
-
-        orig(self);
+        return !DearImGuiInjection.IsCursorVisible;
     }
 
     private void OnDestroy()
