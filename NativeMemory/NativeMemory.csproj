@@ -5,25 +5,26 @@
 		<PlatformTarget>AnyCPU</PlatformTarget>
 		<LangVersion>preview</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<DebugSymbols>false</DebugSymbols>
+		<DebugType>none</DebugType>
+		<Optimize>true</Optimize>
 		<Configurations>netstandard2.0;net46;net6</Configurations>
+		<TargetFramework>netstandard2.0</TargetFramework>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='netstandard2.0'">
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
-		<AssemblyName>NativeMemory.netstandard2.0</AssemblyName>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='net46'">
 		<TargetFramework>net46</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
-		<AssemblyName>NativeMemory.net46</AssemblyName>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='net6'">
 		<TargetFramework>net6</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
-		<AssemblyName>NativeMemory.net6</AssemblyName>
 	</PropertyGroup>
 	
 </Project>

@@ -7,7 +7,6 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using DearImGuiInjection.Backends;
 using Il2CppInterop.Runtime.Injection;
-using MonoMod.RuntimeDetour;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -25,7 +24,7 @@ internal static class LogInitier
 internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
 {
     private System.Reflection.MethodInfo _eventSystemUpdate;
-    private Hook _eventSystemUpdateHook;
+    //private Hook _eventSystemUpdateHook;
 
     private static GameObject UnityMainThreadDispatcherHolder;
     private static UnityMainThreadDispatcher UnityMainThreadDispatcherInstance;
@@ -80,7 +79,7 @@ internal class DearImGuiInjectionBasePluginIL2CPP : BasePlugin
 
     private void OnDestroy()
     {
-        _eventSystemUpdateHook?.Dispose();
+        //_eventSystemUpdateHook?.Dispose();
 
         DearImGuiInjection.Dispose();
     }
