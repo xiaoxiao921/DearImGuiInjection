@@ -90,8 +90,11 @@ public static class DearImGuiInjection
         {
             case RendererKind.None:
                 break;
-            case RendererKind.DXGI:
-                ImGuiDXGI.Init();
+            case RendererKind.D3D11:
+                ImGuiDX11.Init();
+                break;
+            case RendererKind.D3D12:
+                ImGuiDX12.Init();
                 break;
         }
     }
@@ -102,8 +105,11 @@ public static class DearImGuiInjection
         {
             case RendererKind.None:
                 break;
-            case RendererKind.DXGI:
-                ImGuiDXGI.Dispose();
+            case RendererKind.D3D11:
+                ImGuiDX11.Dispose();
+                break;
+            case RendererKind.D3D12:
+                ImGuiDX12.Dispose();
                 break;
         }
     }
