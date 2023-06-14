@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using CppInterop;
-using MonoMod.RuntimeDetour;
+using Reloaded.Hooks;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -43,27 +42,28 @@ public enum IDXGISwapChain
     GetLastPresentCount = 17,
 }
 
-public class DXGIRenderer : IRenderer
+public class DX11Renderer : IRenderer
 {
     // https://github.com/BepInEx/BepInEx/blob/master/Runtimes/Unity/BepInEx.Unity.IL2CPP/Hook/INativeDetour.cs#L54
     // Workaround for CoreCLR collecting all delegates
     private static List<object> _cache = new();
 
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    [Reloaded.Hooks.Definitions.X64.Function(Reloaded.Hooks.Definitions.X64.CallingConventions.Microsoft)]
+    [Reloaded.Hooks.Definitions.X86.Function(Reloaded.Hooks.Definitions.X86.CallingConventions.Stdcall)]
     private delegate IntPtr CDXGISwapChainPresentDelegate(IntPtr self, uint syncInterval, uint flags);
 
-    private static CDXGISwapChainPresentDelegate _swapchainpresenthookdelegate;
-    private static NativeDetour _detourPresent;
-    private static CDXGISwapChainPresentDelegate _originalPresent;
+    private static CDXGISwapChainPresentDelegate _swapChainPresentHookDelegate;
+    private static Hook<CDXGISwapChainPresentDelegate> _swapChainPresentHook;
 
     public static event Action<SwapChain, uint, uint> OnPresent { add { _onPresentAction += value; } remove { _onPresentAction -= value; } }
     private static event Action<SwapChain, uint, uint> _onPresentAction;
 
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    [Reloaded.Hooks.Definitions.X64.Function(Reloaded.Hooks.Definitions.X64.CallingConventions.Microsoft)]
+    [Reloaded.Hooks.Definitions.X86.Function(Reloaded.Hooks.Definitions.X86.CallingConventions.Stdcall)]
     private delegate IntPtr CDXGISwapChainResizeBuffersDelegate(IntPtr self, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags);
-    private static NativeDetour _detourResizeBuffers;
-    private static CDXGISwapChainResizeBuffersDelegate _originalResizeBuffers;
-    private CDXGISwapChainResizeBuffersDelegate _swapchainresizebufferhookdelegate;
+
+    private static CDXGISwapChainResizeBuffersDelegate _swapChainResizeBuffersHookDelegate;
+    private static Hook<CDXGISwapChainResizeBuffersDelegate> _swapChainResizeBuffersHook;
 
     public static event Action<SwapChain, uint, uint, uint, Format, uint> PreResizeBuffers { add { _preResizeBuffers += value; } remove { _preResizeBuffers -= value; } }
     private static event Action<SwapChain, uint, uint, uint, Format, uint> _preResizeBuffers;
@@ -71,7 +71,7 @@ public class DXGIRenderer : IRenderer
     public static event Action<SwapChain, uint, uint, uint, Format, uint> PostResizeBuffers { add { _postResizeBuffers += value; } remove { _postResizeBuffers -= value; } }
     private static event Action<SwapChain, uint, uint, uint, Format, uint> _postResizeBuffers;
 
-    public bool Init()
+    public unsafe bool Init()
     {
         var windowHandle = Windows.User32.CreateFakeWindow();
 
@@ -86,7 +86,7 @@ public class DXGIRenderer : IRenderer
         };
 
         Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.None, desc, out var dx11Device, out var dxgiSwapChain);
-        var DXGIVTable = VirtualFunctionTable.FromObject(dxgiSwapChain.NativePointer, Enum.GetNames(typeof(IDXGISwapChain)).Length);
+        var DXGIVTable = VirtualFunctionTable.FromObject((nuint)(nint)dxgiSwapChain.NativePointer, (nuint)Enum.GetNames(typeof(IDXGISwapChain)).Length);
         var swapChainPresentFunctionPtr = DXGIVTable.TableEntries[(int)IDXGISwapChain.Present].FunctionPointer;
         var swapChainResizeBuffersFunctionPtr = DXGIVTable.TableEntries[(int)IDXGISwapChain.ResizeBuffers].FunctionPointer;
 
@@ -95,40 +95,28 @@ public class DXGIRenderer : IRenderer
 
         Windows.User32.DestroyWindow(windowHandle);
 
-        _swapchainpresenthookdelegate = new CDXGISwapChainPresentDelegate(SwapChainPresentHook);
-        _cache.Add(_swapchainpresenthookdelegate);
+        _swapChainPresentHookDelegate = new CDXGISwapChainPresentDelegate(SwapChainPresentHook);
+        _cache.Add(_swapChainPresentHookDelegate);
 
-        _detourPresent = new NativeDetour(
-            swapChainPresentFunctionPtr,
-            Marshal.GetFunctionPointerForDelegate(_swapchainpresenthookdelegate),
-            new NativeDetourConfig { ManualApply = true });
-        _originalPresent = _detourPresent.GenerateTrampoline<CDXGISwapChainPresentDelegate>();
-        _cache.Add(_detourPresent);
-        _cache.Add(_originalPresent);
-        _detourPresent.Apply();
+        _swapChainPresentHook = new(_swapChainPresentHookDelegate, swapChainPresentFunctionPtr);
+        _swapChainPresentHook.Activate();
 
-        _swapchainresizebufferhookdelegate = new CDXGISwapChainResizeBuffersDelegate(SwapChainResizeBuffersHook);
-        _cache.Add(_swapchainresizebufferhookdelegate);
+        _swapChainResizeBuffersHookDelegate = new CDXGISwapChainResizeBuffersDelegate(SwapChainResizeBuffersHook);
+        _cache.Add(_swapChainResizeBuffersHookDelegate);
 
-        _detourResizeBuffers = new NativeDetour(
-            swapChainResizeBuffersFunctionPtr,
-            Marshal.GetFunctionPointerForDelegate(_swapchainresizebufferhookdelegate),
-            new NativeDetourConfig { ManualApply = true });
-        _originalResizeBuffers = _detourResizeBuffers.GenerateTrampoline<CDXGISwapChainResizeBuffersDelegate>();
-        _cache.Add(_detourResizeBuffers);
-        _cache.Add(_originalResizeBuffers);
-        _detourResizeBuffers.Apply();
+        _swapChainResizeBuffersHook = new(_swapChainResizeBuffersHookDelegate, swapChainResizeBuffersFunctionPtr);
+        _swapChainResizeBuffersHook.Activate();
 
         return true;
     }
 
     public void Dispose()
     {
-        _detourResizeBuffers.Dispose();
-        _originalResizeBuffers = null;
+        _swapChainResizeBuffersHook?.Disable();
+        _swapChainResizeBuffersHook = null;
 
-        _detourPresent.Dispose();
-        _originalPresent = null;
+        _swapChainPresentHook?.Disable();
+        _swapChainPresentHook = null;
 
         _onPresentAction = null;
     }
@@ -152,7 +140,7 @@ public class DXGIRenderer : IRenderer
             }
         }
 
-        return _originalPresent(self, syncInterval, flags);
+        return _swapChainPresentHook.OriginalFunction(self, syncInterval, flags);
     }
 
     private IntPtr SwapChainResizeBuffersHook(IntPtr swapchainPtr, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
@@ -174,7 +162,7 @@ public class DXGIRenderer : IRenderer
             }
         }
 
-        var result = _originalResizeBuffers(swapchainPtr, bufferCount, width, height, newFormat, swapchainFlags);
+        var result = _swapChainResizeBuffersHook.OriginalFunction(swapchainPtr, bufferCount, width, height, newFormat, swapchainFlags);
 
         if (_postResizeBuffers != null)
         {
