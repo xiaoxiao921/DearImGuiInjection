@@ -145,6 +145,7 @@ using BepInEx.Unity.IL2CPP;
 using BepInEx.Unity.IL2CPP.UnityEngine;
 using DearImGuiInjection;
 using DearImguiSharp;
+using Il2CppInterop.Runtime.Injection;
 using MonoMod.RuntimeDetour;
 using UnityEngine;
 
@@ -159,12 +160,16 @@ public class TestPluginBehaviour : MonoBehaviour
         UpdateMethod();
     }
 
-    private static GameObject goTest;
     private static void UpdateMethod()
     {
-        if (Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.F3))
+        if (Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.F6))
         {
-            Log.Info("WOWEEEEEEEE");
+            Screen.SetResolution(1280, 720, true);
+        }
+
+        if (Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.F7))
+        {
+            Screen.SetResolution(1920, 1080, true);
         }
     }
 }
@@ -184,12 +189,20 @@ internal class TestPlugin : BasePlugin
     private static bool _isMyUIOpen = true;
 
     private static List<Hook> Hooks = new();
+    private GameObject TestPluginBehaviourHolder;
+    private TestPluginBehaviour TestPluginBehaviourInstance;
 
     public override void Load()
     {
         LogInitier.Init(Log);
 
         DearImGuiInjection.DearImGuiInjection.Render += MyUI;
+
+        ClassInjector.RegisterTypeInIl2Cpp<UnityMainThreadDispatcher>();
+        TestPluginBehaviourHolder = new("TestPluginBehaviourGO");
+        GameObject.DontDestroyOnLoad(TestPluginBehaviourHolder);
+        TestPluginBehaviourHolder.hideFlags |= HideFlags.HideAndDontSave;
+        TestPluginBehaviourInstance = TestPluginBehaviourHolder.AddComponent<TestPluginBehaviour>();
     }
 
     private static void MyUI()
