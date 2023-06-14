@@ -1,4 +1,7 @@
-﻿using RendererFinder.Renderers;
+﻿using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using RendererFinder.Renderers;
 
 namespace RendererFinder;
 
@@ -6,7 +9,7 @@ public static class RendererFinder
 {
     public static RendererKind RendererKind { get; private set; }
 
-    public static readonly RendererKind[] AvailableRenderers = { RendererKind.DXGI };
+    public static readonly RendererKind[] AvailableRenderers = { RendererKind.D3D11, RendererKind.D3D12 };
 
     public static bool Init()
     {
@@ -34,10 +37,64 @@ public static class RendererFinder
         RendererKind = RendererKind.None;
     }
 
-    private static DXGIRenderer GetImplementationFromRendererKind(RendererKind rendererKind) =>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static IRenderer NewDX11Renderer()
+    {
+        var d3d11ModuleIsHere = false;
+        var d3d12ModuleIsHere = false;
+        foreach (var processModule in Process.GetCurrentProcess().Modules.Cast<ProcessModule>())
+        {
+            if (processModule?.ModuleName != null)
+            {
+                var moduleName = processModule.ModuleName.ToLowerInvariant();
+                if (moduleName.Contains("d3d11"))
+                {
+                    d3d11ModuleIsHere = true;
+                }
+                else if (moduleName.Contains("d3d12"))
+                {
+                    d3d12ModuleIsHere = true;
+                }
+            }
+        }
+
+        if (!d3d11ModuleIsHere || d3d12ModuleIsHere)
+        {
+            return null;
+        }
+
+        return new DX11Renderer();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static IRenderer NewDX12Renderer()
+    {
+        var d3d12ModuleIsHere = false;
+        foreach (var processModule in Process.GetCurrentProcess().Modules.Cast<ProcessModule>())
+        {
+            if (processModule?.ModuleName != null)
+            {
+                var moduleName = processModule.ModuleName.ToLowerInvariant();
+                if (moduleName.Contains("d3d12"))
+                {
+                    d3d12ModuleIsHere = true;
+                }
+            }
+        }
+
+        if (!d3d12ModuleIsHere)
+        {
+            return null;
+        }
+
+        return new DX12Renderer();
+    }
+
+    private static IRenderer GetImplementationFromRendererKind(RendererKind rendererKind) =>
         rendererKind switch
         {
-            RendererKind.DXGI => new DXGIRenderer(),
+            RendererKind.D3D11 => NewDX11Renderer(),
+            RendererKind.D3D12 => NewDX12Renderer(),
             _ => null,
         };
 }

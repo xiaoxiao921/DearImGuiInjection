@@ -3,7 +3,8 @@
 public enum RendererKind
 {
     None,
-    DXGI
+    D3D11,
+    D3D12
 }
 
 public interface IRenderer
