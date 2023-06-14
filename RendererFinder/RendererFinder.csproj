@@ -28,7 +28,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MonoMod.RuntimeDetour" Version="22.5.1.1" />
+		<PackageReference Include="Reloaded.Hooks" Version="4.3.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -40,12 +40,14 @@
 		<PackageReference Include="netstandard2.0.SharpDX" Version="4.2.1-beta0-g7abb72df54" />
 		<PackageReference Include="netstandard2.0.SharpDX.DXGI" Version="4.2.1-beta0-g7abb72df54" />
 		<PackageReference Include="netstandard2.0.SharpDX.Direct3D11" Version="4.2.1-beta0-g7abb72df54" />
+		<PackageReference Include="netstandard2.0.SharpDX.Direct3D12" Version="4.2.1-beta0-g7abb72df54" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)'=='net46'">
 		<PackageReference Include="SharpDX" Version="4.2.0" />
 		<PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
 		<PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+		<PackageReference Include="SharpDX.Direct3D12" Version="4.2.0" />
 	</ItemGroup>
 
 </Project>
