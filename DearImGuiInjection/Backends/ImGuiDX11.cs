@@ -7,7 +7,7 @@ using Device = SharpDX.Direct3D11.Device;
 
 namespace DearImGuiInjection.Backends;
 
-internal static class ImGuiDXGI
+internal static class ImGuiDX11
 {
     private static IntPtr _windowHandle;
 
@@ -20,11 +20,11 @@ internal static class ImGuiDXGI
 
     internal static void Init()
     {
-        RendererFinder.Renderers.DXGIRenderer.OnPresent += InitImGui;
+        RendererFinder.Renderers.DX11Renderer.OnPresent += InitImGui;
 
-        RendererFinder.Renderers.DXGIRenderer.OnPresent += RenderImGui;
-        RendererFinder.Renderers.DXGIRenderer.PreResizeBuffers += PreResizeBuffers;
-        RendererFinder.Renderers.DXGIRenderer.PostResizeBuffers += PostResizeBuffers;
+        RendererFinder.Renderers.DX11Renderer.OnPresent += RenderImGui;
+        RendererFinder.Renderers.DX11Renderer.PreResizeBuffers += PreResizeBuffers;
+        RendererFinder.Renderers.DX11Renderer.PostResizeBuffers += PostResizeBuffers;
     }
 
     internal static void Dispose()
@@ -34,11 +34,11 @@ internal static class ImGuiDXGI
             return;
         }
 
-        RendererFinder.Renderers.DXGIRenderer.PostResizeBuffers -= PostResizeBuffers;
-        RendererFinder.Renderers.DXGIRenderer.PreResizeBuffers -= PreResizeBuffers;
-        RendererFinder.Renderers.DXGIRenderer.OnPresent -= RenderImGui;
+        RendererFinder.Renderers.DX11Renderer.PostResizeBuffers -= PostResizeBuffers;
+        RendererFinder.Renderers.DX11Renderer.PreResizeBuffers -= PreResizeBuffers;
+        RendererFinder.Renderers.DX11Renderer.OnPresent -= RenderImGui;
 
-        SetWindowLongPtr64(_windowHandle, GWL_WNDPROC, _originalWindowProc);
+        SetWindowLong(_windowHandle, GWL_WNDPROC, _originalWindowProc);
 
         ImGui.ImGuiImplWin32Shutdown();
 
@@ -69,7 +69,7 @@ internal static class ImGuiDXGI
             DearImGuiInjection.Initialized = true;
         }
 
-        RendererFinder.Renderers.DXGIRenderer.OnPresent -= InitImGui;
+        RendererFinder.Renderers.DX11Renderer.OnPresent -= InitImGui;
     }
 
     private static unsafe void InitImGuiWin32(IntPtr windowHandle)
@@ -84,7 +84,7 @@ internal static class ImGuiDXGI
             ImGui.ImGuiImplWin32Init(_windowHandle);
 
             _myWindowProc = new WndProcDelegate(WndProcHandler);
-            _originalWindowProc = SetWindowLongPtr64(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_myWindowProc));
+            _originalWindowProc = SetWindowLong(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_myWindowProc));
         }
     }
 
@@ -110,7 +110,7 @@ internal static class ImGuiDXGI
             return GetWindowLongPtr32(hWnd, nIndex);
     }
 
-    public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+    public static IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
     {
         if (IntPtr.Size == 8)
             return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
@@ -123,8 +123,6 @@ internal static class ImGuiDXGI
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
     private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-    [DllImport("user32.dll")]
-    static extern int SetWindowLong(IntPtr hWnd, int nIndex, uint dwNewLong);
 
     [DllImport("user32.dll")]
     private static extern IntPtr CallWindowProc(IntPtr previousWindowProc, IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
