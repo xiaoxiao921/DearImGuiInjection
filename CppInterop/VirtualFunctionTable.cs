@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace CppInterop;
 
@@ -11,12 +10,12 @@ public struct TableEntry
     /// <summary>
     /// The address in process memory where the VTable entry has been found.
     /// </summary>
-    public IntPtr EntryAddress;
+    public nuint EntryAddress;
 
     /// <summary>
     /// The value of the individual entry in process memory for the VTable entry pointing to a function.
     /// </summary>
-    public IntPtr FunctionPointer;
+    public nuint FunctionPointer;
 }
 
 /// <summary>
@@ -50,7 +49,7 @@ public class VirtualFunctionTable
     ///     For enumerables, you may obtain this value as such: Enum.GetNames(typeof(MyEnum)).Length; where
     ///     MyEnum is the name of your enumerable.
     /// </param>
-    public static VirtualFunctionTable FromObject(IntPtr objectAddress, int numberOfMethods)
+    public static VirtualFunctionTable FromObject(nuint objectAddress, nuint numberOfMethods)
     {
         var table = new VirtualFunctionTable
         {
@@ -71,7 +70,7 @@ public class VirtualFunctionTable
     ///     For enumerables, you may obtain this value as such: Enum.GetNames(typeof(MyEnum)).Length; where
     ///     MyEnum is the name of your enumerable.
     /// </param>
-    public static VirtualFunctionTable FromAddress(IntPtr tableAddress, int numberOfMethods)
+    public static VirtualFunctionTable FromAddress(nuint tableAddress, nuint numberOfMethods)
     {
         var table = new VirtualFunctionTable
         {
@@ -81,29 +80,30 @@ public class VirtualFunctionTable
         return table;
     }
 
-    private static unsafe List<TableEntry> GetObjectVTableAddresses(IntPtr objectAddress, int numberOfMethods)
+    private static unsafe List<TableEntry> GetObjectVTableAddresses(nuint objectAddress, nuint numberOfMethods)
     {
-        var virtualFunctionTableAddress = *(ulong*)objectAddress;
+        var virtualFunctionTableAddress = *(nuint*)objectAddress;
 
-        return GetAddresses((IntPtr)virtualFunctionTableAddress, numberOfMethods);
+        return GetAddresses(virtualFunctionTableAddress, numberOfMethods);
     }
 
-    private static unsafe List<TableEntry> GetAddresses(IntPtr tablePointer, int numberOfMethods)
+    private static unsafe List<TableEntry> GetAddresses(nuint tablePointer, nuint numberOfMethods)
     {
+        nuint pointerSize = (nuint)sizeof(nuint);
+
         // Stores the addresses of the virtual function table.
         var tablePointers = new List<TableEntry>();
 
         // Append the table pointers onto the tablePointers list.
-        // Using the size of the IntPtr allows for both x64 and x86 support.
-        for (var i = 0; i < numberOfMethods; i++)
+        for (nuint i = 0; i < numberOfMethods; i++)
         {
-            IntPtr targetAddress = tablePointer + IntPtr.Size * i;
+            nuint targetAddress = tablePointer + pointerSize * i;
 
-            var functionPtr = *(ulong*)targetAddress;
+            nuint functionPtr = *(nuint*)targetAddress;
             tablePointers.Add(new TableEntry
             {
                 EntryAddress = targetAddress,
-                FunctionPointer = (IntPtr)functionPtr
+                FunctionPointer = functionPtr
             });
         }
 
