@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DearImGuiInjection.Backends;
+namespace DearImGuiInjection.Windows;
 
 public enum WindowMessage : uint
 {

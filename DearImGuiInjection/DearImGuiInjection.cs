@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using DearImGuiInjection.Backends;
+using DearImGuiInjection.Windows;
 using DearImguiSharp;
 using RendererFinder.Renderers;
 

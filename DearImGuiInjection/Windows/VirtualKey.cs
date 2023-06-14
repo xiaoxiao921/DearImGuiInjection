@@ -1,4 +1,4 @@
-﻿namespace DearImGuiInjection.Backends;
+﻿namespace DearImGuiInjection.Windows;
 
 /// <summary>
 /// Enumeration for virtual keys.

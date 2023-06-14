@@ -23,11 +23,11 @@ internal static class ImGuiDX12
     private static DescriptorHeap _shaderDescriptorHeap;
     private static CommandQueue _commandQueue;
 
-    private static WndProcDelegate _myWindowProc;
+    private static User32.WndProcDelegate _myWindowProc;
     private static IntPtr _originalWindowProc;
     private const int GWL_WNDPROC = -4;
 
-    private static POINT _cursorCoords;
+    private static User32.POINT _cursorCoords;
 
     internal static void Init()
     {
@@ -56,7 +56,7 @@ internal static class ImGuiDX12
         RendererFinder.Renderers.DX12Renderer.OnExecuteCommandList -= RetrieveCommandQueue;
         RendererFinder.Renderers.DX12Renderer.OnPresent -= RenderImGui;
 
-        SetWindowLong(_windowHandle, GWL_WNDPROC, _originalWindowProc);
+        User32.SetWindowLong(_windowHandle, GWL_WNDPROC, _originalWindowProc);
 
         ImGui.ImGuiImplWin32Shutdown();
 
@@ -110,8 +110,8 @@ internal static class ImGuiDX12
             Log.Info($"ImGuiImplWin32Init, Window Handle: {windowHandle:X}");
             ImGui.ImGuiImplWin32Init(_windowHandle);
 
-            _myWindowProc = new WndProcDelegate(WndProcHandler);
-            _originalWindowProc = SetWindowLong(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_myWindowProc));
+            _myWindowProc = new User32.WndProcDelegate(WndProcHandler);
+            _originalWindowProc = User32.SetWindowLong(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_myWindowProc));
         }
     }
 
@@ -176,55 +176,6 @@ internal static class ImGuiDX12
         return device;
     }
 
-    [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-    private static extern IntPtr GetWindowLongPtr32(IntPtr hWnd, int nIndex);
-
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
-    private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
-
-    public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
-    {
-        if (IntPtr.Size == 8)
-            return GetWindowLongPtr64(hWnd, nIndex);
-        else
-            return GetWindowLongPtr32(hWnd, nIndex);
-    }
-
-    public static IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
-    {
-        if (IntPtr.Size == 8)
-            return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
-        else
-            return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
-    }
-
-    [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
-    private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
-
-    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-    private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr CallWindowProc(IntPtr previousWindowProc, IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
-
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    private delegate IntPtr WndProcDelegate(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetCursorPos(out POINT point);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetCursorPos(int x, int y);
-
-    [StructLayout(LayoutKind.Sequential)]
-    struct POINT
-    {
-        public Int32 X;
-        public Int32 Y;
-    }
-
     private static unsafe IntPtr WndProcHandler(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam)
     {
         ImGui.ImplWin32_WndProcHandler((void*)windowHandle, (uint)message, wParam, lParam);
@@ -236,18 +187,18 @@ internal static class ImGuiDX12
             DearImGuiInjection.ToggleCursor();
         }
 
-        return CallWindowProc(_originalWindowProc, windowHandle, message, wParam, lParam);
+        return User32.CallWindowProc(_originalWindowProc, windowHandle, message, wParam, lParam);
     }
 
     private static unsafe void SaveOrRestoreCursorPosition()
     {
         if (DearImGuiInjection.IsCursorVisible)
         {
-            GetCursorPos(out _cursorCoords);
+            User32.GetCursorPos(out _cursorCoords);
         }
         else if (_cursorCoords.X + _cursorCoords.Y != 0)
         {
-            SetCursorPos(_cursorCoords.X, _cursorCoords.Y);
+            User32.SetCursorPos(_cursorCoords.X, _cursorCoords.Y);
         }
     }
 

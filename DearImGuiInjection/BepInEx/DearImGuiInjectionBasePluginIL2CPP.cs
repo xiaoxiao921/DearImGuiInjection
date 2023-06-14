@@ -6,7 +6,7 @@ using System.Reflection;
 using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using DearImGuiInjection.Backends;
+using DearImGuiInjection.Windows;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
