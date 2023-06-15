@@ -33,7 +33,7 @@ if (string.IsNullOrWhiteSpace(solutionDirectory?.FullName))
 }
 
 CreateRelease(solutionDirectory, "netstandard2.0");
-CreateRelease(solutionDirectory, "net46");
+CreateRelease(solutionDirectory, "net462");
 CreateRelease(solutionDirectory, "net6");
 
 static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)

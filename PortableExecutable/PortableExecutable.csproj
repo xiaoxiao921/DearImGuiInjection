@@ -8,7 +8,7 @@
 		<DebugSymbols>false</DebugSymbols>
 		<DebugType>none</DebugType>
 		<Optimize>true</Optimize>
-		<Configurations>netstandard2.0;net46;net6</Configurations>
+		<Configurations>netstandard2.0;net462;net6</Configurations>
 		<TargetFramework>netstandard2.0</TargetFramework>
 	</PropertyGroup>
 
@@ -17,8 +17,8 @@
 		<OutputPath>../bin/</OutputPath>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)'=='net46'">
-		<TargetFramework>net46</TargetFramework>
+	<PropertyGroup Condition="'$(Configuration)'=='net462'">
+		<TargetFramework>net462</TargetFramework>
 		<OutputPath>../bin/</OutputPath>
 	</PropertyGroup>
 
@@ -27,7 +27,7 @@
 		<OutputPath>../bin/</OutputPath>
 	</PropertyGroup>
 
-	<ItemGroup Condition="'$(Configuration)'=='net46'">
+	<ItemGroup Condition="'$(Configuration)'=='net462'">
 	  <PackageReference Include="System.Net.Http" Version="4.3.4" />
 	</ItemGroup>
 

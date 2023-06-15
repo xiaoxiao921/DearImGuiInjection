@@ -1,11 +1,11 @@
-#if NETSTANDARD2_0 || NET46
+#if NETSTANDARD2_0 || NET462
 
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
-using DearImGuiInjection.Backends;
+using DearImGuiInjection.Windows;
 using MonoMod.RuntimeDetour;
 
 namespace DearImGuiInjection.BepInEx;
