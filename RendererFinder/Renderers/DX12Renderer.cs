@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CppInterop;
 using Reloaded.Hooks;
 using SharpDX.Direct3D12;
@@ -17,7 +18,7 @@ public class DX12Renderer : IRenderer
     [Reloaded.Hooks.Definitions.X86.Function(Reloaded.Hooks.Definitions.X86.CallingConventions.Stdcall)]
     private delegate IntPtr CDXGISwapChainPresent1Delegate(IntPtr self, uint syncInterval, uint presentFlags, IntPtr presentParametersRef);
 
-    private static CDXGISwapChainPresent1Delegate _swapchainPresentHookDelegate = new(SwapChainPresentHook);
+    private static readonly CDXGISwapChainPresent1Delegate _swapchainPresentHookDelegate = new(SwapChainPresentHook);
     private static Hook<CDXGISwapChainPresent1Delegate> _swapChainPresentHook;
 
     public static event Action<SwapChain3, uint, uint, IntPtr> OnPresent { add => _onPresentAction += value; remove => _onPresentAction -= value; }
@@ -25,21 +26,22 @@ public class DX12Renderer : IRenderer
 
     [Reloaded.Hooks.Definitions.X64.Function(Reloaded.Hooks.Definitions.X64.CallingConventions.Microsoft)]
     [Reloaded.Hooks.Definitions.X86.Function(Reloaded.Hooks.Definitions.X86.CallingConventions.Stdcall)]
-    private delegate IntPtr CDXGISwapChainResizeBuffersDelegate(IntPtr self, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags);
+    private delegate IntPtr CDXGISwapChainResizeBuffersDelegate(IntPtr self, int bufferCount, int width, int height, int newFormat, int swapchainFlags);
+
     private static readonly CDXGISwapChainResizeBuffersDelegate _swapChainResizeBufferHookDelegate = new(SwapChainResizeBuffersHook);
     private static Hook<CDXGISwapChainResizeBuffersDelegate> _swapChainResizeBufferHook;
 
-    public static event Action<SwapChain3, uint, uint, uint, Format, uint> PreResizeBuffers { add => _preResizeBuffers += value; remove => _preResizeBuffers -= value; }
-    private static Action<SwapChain3, uint, uint, uint, Format, uint> _preResizeBuffers;
+    public static event Action<SwapChain3, int, int, int, int, int> PreResizeBuffers { add => _preResizeBuffers += value; remove => _preResizeBuffers -= value; }
+    private static Action<SwapChain3, int, int, int, int, int> _preResizeBuffers;
 
-    public static event Action<SwapChain3, uint, uint, uint, Format, uint> PostResizeBuffers { add => _postResizeBuffers += value; remove => _postResizeBuffers -= value; }
-    private static Action<SwapChain3, uint, uint, uint, Format, uint> _postResizeBuffers;
+    public static event Action<SwapChain3, int, int, int, int, int> PostResizeBuffers { add => _postResizeBuffers += value; remove => _postResizeBuffers -= value; }
+    private static Action<SwapChain3, int, int, int, int, int> _postResizeBuffers;
 
     [Reloaded.Hooks.Definitions.X64.Function(Reloaded.Hooks.Definitions.X64.CallingConventions.Microsoft)]
     [Reloaded.Hooks.Definitions.X86.Function(Reloaded.Hooks.Definitions.X86.CallingConventions.Stdcall)]
     private delegate void CommandQueueExecuteCommandListDelegate(IntPtr self, uint numCommandLists, IntPtr ppCommandLists);
 
-    private static CommandQueueExecuteCommandListDelegate _commandQueueExecuteCommandListHookDelegate = new(CommandQueueExecuteCommandListHook);
+    private static readonly CommandQueueExecuteCommandListDelegate _commandQueueExecuteCommandListHookDelegate = new(CommandQueueExecuteCommandListHook);
     private static Hook<CommandQueueExecuteCommandListDelegate> _commandQueueExecuteCommandListHook;
 
     public static event Func<CommandQueue, uint, IntPtr, bool> OnExecuteCommandList
@@ -48,20 +50,20 @@ public class DX12Renderer : IRenderer
         {
             lock (_onExecuteCommandListActionLock)
             {
-                _onExecuteCommandListAction += value;
+                OnExecuteCommandListAction += value;
             }
         }
         remove
         {
             lock (_onExecuteCommandListActionLock)
             {
-                _onExecuteCommandListAction -= value;
+                OnExecuteCommandListAction -= value;
             }
         }
     }
-    private static object _onExecuteCommandListActionLock = new();
+    private static readonly object _onExecuteCommandListActionLock = new();
 
-    private static event Func<CommandQueue, uint, IntPtr, bool> _onExecuteCommandListAction;
+    private static event Func<CommandQueue, uint, IntPtr, bool> OnExecuteCommandListAction;
 
     public unsafe bool Init()
     {
@@ -88,9 +90,9 @@ public class DX12Renderer : IRenderer
         tempSwapChain.Dispose();
 
         const int Present1MethodTableIndex = 22;
-        const int ResizeBuffer1MethodTableIndex = 39;
+        const int ResizeBufferMethodTableIndex = 13;
         // not accurate, probably, don't care. Just make sure to extend it if needed
-        const int SwapChainFunctionCount = ResizeBuffer1MethodTableIndex + 1;
+        const int SwapChainFunctionCount = Present1MethodTableIndex + 1;
         var swapChainVTable = VirtualFunctionTable.FromObject((nuint)(nint)swapChain.NativePointer, SwapChainFunctionCount);
 
         const int ExecuteCommandListTableIndex = 10;
@@ -114,7 +116,7 @@ public class DX12Renderer : IRenderer
         {
             _cache.Add(_swapChainResizeBufferHookDelegate);
 
-            _swapChainResizeBufferHook = new(_swapChainResizeBufferHookDelegate, swapChainVTable.TableEntries[ResizeBuffer1MethodTableIndex].FunctionPointer);
+            _swapChainResizeBufferHook = new(_swapChainResizeBufferHookDelegate, swapChainVTable.TableEntries[ResizeBufferMethodTableIndex].FunctionPointer);
             _swapChainResizeBufferHook.Activate();
         }
 
@@ -148,7 +150,7 @@ public class DX12Renderer : IRenderer
 
         if (_onPresentAction != null)
         {
-            foreach (Action<SwapChain3, uint, uint, IntPtr> item in _onPresentAction.GetInvocationList())
+            foreach (Action<SwapChain3, uint, uint, IntPtr> item in _onPresentAction.GetInvocationList().Cast<Action<SwapChain3, uint, uint, IntPtr>>())
             {
                 try
                 {
@@ -164,13 +166,13 @@ public class DX12Renderer : IRenderer
         return _swapChainPresentHook.OriginalFunction(self, syncInterval, flags, presentParameters);
     }
 
-    private static IntPtr SwapChainResizeBuffersHook(IntPtr swapchainPtr, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
+    private static IntPtr SwapChainResizeBuffersHook(IntPtr swapchainPtr, int bufferCount, int width, int height, int newFormat, int swapchainFlags)
     {
         var swapChain = new SwapChain3(swapchainPtr);
 
         if (_preResizeBuffers != null)
         {
-            foreach (Action<SwapChain, uint, uint, uint, Format, uint> item in _preResizeBuffers.GetInvocationList())
+            foreach (Action<SwapChain3, int, int, int, int, int> item in _preResizeBuffers.GetInvocationList().Cast<Action<SwapChain3, int, int, int, int, int>>())
             {
                 try
                 {
@@ -187,7 +189,7 @@ public class DX12Renderer : IRenderer
 
         if (_postResizeBuffers != null)
         {
-            foreach (Action<SwapChain3, uint, uint, uint, Format, uint> item in _postResizeBuffers.GetInvocationList())
+            foreach (Action<SwapChain3, int, int, int, int, int> item in _postResizeBuffers.GetInvocationList().Cast<Action<SwapChain3, int, int, int, int, int>>())
             {
                 try
                 {
@@ -209,11 +211,11 @@ public class DX12Renderer : IRenderer
 
         lock (_onExecuteCommandListActionLock)
         {
-            if (_onExecuteCommandListAction != null)
+            if (OnExecuteCommandListAction != null)
             {
                 var commandQueue = new CommandQueue(self);
 
-                foreach (Func<CommandQueue, uint, IntPtr, bool> item in _onExecuteCommandListAction.GetInvocationList())
+                foreach (Func<CommandQueue, uint, IntPtr, bool> item in OnExecuteCommandListAction.GetInvocationList().Cast<Func<CommandQueue, uint, IntPtr, bool>>())
                 {
                     try
                     {
