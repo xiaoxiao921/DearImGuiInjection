@@ -164,12 +164,12 @@ public class TestPluginBehaviour : MonoBehaviour
     {
         if (Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.F6))
         {
-            Screen.SetResolution(1280, 720, true);
+            Screen.SetResolution(1280, 720, false);
         }
 
         if (Input.GetKeyInt(BepInEx.Unity.IL2CPP.UnityEngine.KeyCode.F7))
         {
-            Screen.SetResolution(1920, 1080, true);
+            Screen.SetResolution(1920, 1080, false);
         }
     }
 }
@@ -184,7 +184,7 @@ internal static class LogInitier
 
 [BepInDependency(DearImGuiInjection.Metadata.GUID)]
 [BepInPlugin(Metadata.GUID, Metadata.Name, Metadata.Version)]
-internal class TestPlugin : BasePlugin
+internal unsafe class TestPlugin : BasePlugin
 {
     private static bool _isMyUIOpen = true;
 
@@ -250,6 +250,13 @@ internal class TestPlugin : BasePlugin
             {
                 ImGui.Text("hello there");
 
+                fixed (sbyte* lol = buffer_input_text)
+                {
+                    if (ImGui.InputText("lol", lol, bufferSize, 0, null, IntPtr.Zero))
+                    {
+
+                    }
+                }
 
                 if (ImGui.Button("Click me", Constants.DefaultVector2))
                 {
@@ -266,6 +273,9 @@ internal class TestPlugin : BasePlugin
             ImGui.End();
         }
     }
+
+    private static IntPtr bufferSize = new(40);
+    private static sbyte[] buffer_input_text = new sbyte[40];
 }
 
 #endif
