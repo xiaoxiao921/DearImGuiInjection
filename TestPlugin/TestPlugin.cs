@@ -198,7 +198,7 @@ internal class TestPlugin : BasePlugin
 
         DearImGuiInjection.DearImGuiInjection.Render += MyUI;
 
-        ClassInjector.RegisterTypeInIl2Cpp<UnityMainThreadDispatcher>();
+        ClassInjector.RegisterTypeInIl2Cpp<TestPluginBehaviour>();
         TestPluginBehaviourHolder = new("TestPluginBehaviourGO");
         GameObject.DontDestroyOnLoad(TestPluginBehaviourHolder);
         TestPluginBehaviourHolder.hideFlags |= HideFlags.HideAndDontSave;
