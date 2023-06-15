@@ -33,8 +33,11 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
         <Reference Include="Reloaded.Hooks">
-        <HintPath>..\..\..\Reloaded.Hooks\source\Reloaded.Hooks\bin\Release\net462\Reloaded.Hooks.dll</HintPath>
+			<HintPath>..\..\Reloaded.Hooks\source\Reloaded.Hooks\bin\Release\net462\Reloaded.Hooks.dll</HintPath>
         </Reference>
+		<Reference Include="Reloaded.Hooks.Definitions">
+			<HintPath>..\..\Reloaded.Hooks\source\Reloaded.Hooks.Definitions\bin\Release\net462\Reloaded.Hooks.Definitions.dll</HintPath>
+		</Reference>
     </ItemGroup>
 
 	<ItemGroup>
