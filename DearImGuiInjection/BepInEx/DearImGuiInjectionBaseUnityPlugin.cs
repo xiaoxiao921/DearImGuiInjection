@@ -4,6 +4,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Threading;
 using BepInEx;
 using DearImGuiInjection.Windows;
 using MonoMod.RuntimeDetour;
@@ -29,8 +31,9 @@ internal class DearImGuiInjectionBaseUnityPlugin : BaseUnityPlugin
             Config.Bind("Keybinds", "CursorVisibility",
             DearImGuiInjection.CursorVisibilityToggleDefault,
             "Key for switching the cursor visibility."));
-        DearImGuiInjection.Init(imguiIniConfigDirectoryPath, assetsFolder, cursorVisibilityConfig);
 
+        DearImGuiInjection.Init(imguiIniConfigDirectoryPath, assetsFolder, cursorVisibilityConfig);
+        
         SetupIgnoreUIObjectsWhenImGuiCursorIsVisible();
 
         gameObject.AddComponent<UnityMainThreadDispatcher>();

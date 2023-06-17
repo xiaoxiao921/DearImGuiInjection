@@ -2,9 +2,8 @@
 
 using System.Collections.Generic;
 using BepInEx;
-using DearImGuiInjection;
 using DearImGuiInjection.BepInEx;
-using DearImguiSharp;
+using ImGuiNET;
 using MonoMod.RuntimeDetour;
 using UnityEngine;
 
@@ -71,14 +70,13 @@ internal class TestPlugin : BaseUnityPlugin
     {
         if (DearImGuiInjection.DearImGuiInjection.IsCursorVisible)
         {
-            var dummy = true;
-            ImGui.ShowDemoWindow(ref dummy);
+            ImGui.ShowDemoWindow();
 
             if (ImGui.BeginMainMenuBar())
             {
-                if (ImGui.BeginMenu("MainBar", true))
+                if (ImGui.BeginMenu("MainBar"))
                 {
-                    if (ImGui.MenuItemBool("MyTestPlugin", null, false, true))
+                    if (ImGui.MenuItem("MyTestPlugin"))
                     {
                         _isMyUIOpen ^= true;
                     }
@@ -93,7 +91,7 @@ internal class TestPlugin : BaseUnityPlugin
             {
                 if (ImGui.BeginMenu("MainBar", true))
                 {
-                    if (ImGui.MenuItemBool("MyTestPlugin2", null, false, true))
+                    if (ImGui.MenuItem("MyTestPlugin2"))
                     {
                         _isMyUIOpen ^= true;
                     }
@@ -112,8 +110,12 @@ internal class TestPlugin : BaseUnityPlugin
             {
                 ImGui.Text("hello there");
 
+                if (ImGui.InputText("lol", buffer_input_text, (uint)buffer_input_text.Length))
+                {
 
-                if (ImGui.Button("Click me", Constants.DefaultVector2))
+                }
+
+                if (ImGui.Button("Click me"))
                 {
                     // Interacting with the unity api must be done from the unity main thread
                     // Can just use the dispatcher shipped with the library for that
@@ -129,6 +131,8 @@ internal class TestPlugin : BaseUnityPlugin
         }
     }
 
+    private static byte[] buffer_input_text = new byte[40];
+
     private void OnDisable()
     {
         DearImGuiInjection.DearImGuiInjection.Render -= MyUI;
@@ -143,9 +147,8 @@ using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using BepInEx.Unity.IL2CPP.UnityEngine;
-using DearImGuiInjection;
-using DearImguiSharp;
 using Il2CppInterop.Runtime.Injection;
+using ImGuiNET;
 using MonoMod.RuntimeDetour;
 using UnityEngine;
 
@@ -209,14 +212,13 @@ internal unsafe class TestPlugin : BasePlugin
     {
         if (DearImGuiInjection.DearImGuiInjection.IsCursorVisible)
         {
-            var dummy = true;
-            ImGui.ShowDemoWindow(ref dummy);
+            ImGui.ShowDemoWindow();
 
             if (ImGui.BeginMainMenuBar())
             {
-                if (ImGui.BeginMenu("MainBar", true))
+                if (ImGui.BeginMenu("MainBar"))
                 {
-                    if (ImGui.MenuItemBool("MyTestPlugin", null, false, true))
+                    if (ImGui.MenuItem("MyTestPlugin"))
                     {
                         _isMyUIOpen ^= true;
                     }
@@ -231,7 +233,7 @@ internal unsafe class TestPlugin : BasePlugin
             {
                 if (ImGui.BeginMenu("MainBar", true))
                 {
-                    if (ImGui.MenuItemBool("MyTestPlugin2", null, false, true))
+                    if (ImGui.MenuItem("MyTestPlugin2"))
                     {
                         _isMyUIOpen ^= true;
                     }
@@ -250,15 +252,12 @@ internal unsafe class TestPlugin : BasePlugin
             {
                 ImGui.Text("hello there");
 
-                fixed (sbyte* lol = buffer_input_text)
+                if (ImGui.InputText("lol", buffer_input_text, (uint)buffer_input_text.Length))
                 {
-                    if (ImGui.InputText("lol", lol, bufferSize, 0, null, IntPtr.Zero))
-                    {
 
-                    }
                 }
 
-                if (ImGui.Button("Click me", Constants.DefaultVector2))
+                if (ImGui.Button("Click me"))
                 {
                     // Interacting with the unity api must be done from the unity main thread
                     // Can just use the dispatcher shipped with the library for that
@@ -274,8 +273,7 @@ internal unsafe class TestPlugin : BasePlugin
         }
     }
 
-    private static IntPtr bufferSize = new(40);
-    private static sbyte[] buffer_input_text = new sbyte[40];
+    private static byte[] buffer_input_text = new byte[40];
 }
 
 #endif

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using DearImGuiInjection.Windows;
-using DearImguiSharp;
+using ImGuiNET;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using Device = SharpDX.Direct3D11.Device;
@@ -41,12 +41,12 @@ internal static class ImGuiDX11
 
         User32.SetWindowLong(_windowHandle, GWL_WNDPROC, _originalWindowProc);
 
-        ImGui.ImGuiImplWin32Shutdown();
+        ImGuiWin32Impl.Shutdown();
 
         _renderTargetView = null;
 
         Log.Info("ImGui.ImGuiImplDX11Shutdown()");
-        ImGui.ImGuiImplDX11Shutdown();
+        ImGuiDX11Impl.Shutdown();
 
         _windowHandle = IntPtr.Zero;
     }
@@ -80,7 +80,7 @@ internal static class ImGuiDX11
                 return;
 
             Log.Info($"ImGuiImplWin32Init, Window Handle: {windowHandle:X}");
-            ImGui.ImGuiImplWin32Init(_windowHandle);
+            ImGuiWin32Impl.Init(_windowHandle);
 
             _myWindowProc = new User32.WndProcDelegate(WndProcHandler);
             _originalWindowProc = User32.SetWindowLong(windowHandle, GWL_WNDPROC, Marshal.GetFunctionPointerForDelegate(_myWindowProc));
@@ -91,7 +91,7 @@ internal static class ImGuiDX11
     {
         using var device = InitImGuiDX11Internal(swapChain);
 
-        ImGui.ImGuiImplDX11Init((void*)device.NativePointer, (void*)device.ImmediateContext.NativePointer);
+        ImGuiDX11Impl.Init((void*)device.NativePointer, (void*)device.ImmediateContext.NativePointer);
     }
 
     private static unsafe Device InitImGuiDX11Internal(SwapChain swapChain)
@@ -105,7 +105,7 @@ internal static class ImGuiDX11
 
     private static unsafe IntPtr WndProcHandler(IntPtr windowHandle, WindowMessage message, IntPtr wParam, IntPtr lParam)
     {
-        ImGui.ImplWin32_WndProcHandler((void*)windowHandle, (uint)message, wParam, lParam);
+        ImGuiWin32Impl.WndProcHandler(windowHandle, message, wParam, lParam);
 
         if (message == WindowMessage.WM_KEYUP && (VirtualKey)wParam == DearImGuiInjection.CursorVisibilityToggle.Get())
         {
@@ -129,7 +129,7 @@ internal static class ImGuiDX11
         }
     }
 
-    private static void RenderImGui(SwapChain swapChain, uint syncInterval, uint flags)
+    private static unsafe void RenderImGui(SwapChain swapChain, uint syncInterval, uint flags)
     {
         var windowHandle = swapChain.Description.OutputHandle;
 
@@ -139,15 +139,15 @@ internal static class ImGuiDX11
             return;
         }
 
-        ImGui.ImGuiImplDX11NewFrame();
+        ImGuiDX11Impl.NewFrame();
 
         NewFrame();
 
         using var device = swapChain.GetDevice<Device>();
         device.ImmediateContext.OutputMerger.SetRenderTargets(_renderTargetView);
 
-        using var drawData = ImGui.GetDrawData();
-        ImGui.ImGuiImplDX11RenderDrawData(drawData);
+        var drawData = ImGui.GetDrawData();
+        ImGuiDX11Impl.RenderDrawData(drawData.NativePtr);
     }
 
     private static bool IsTargetWindowHandle(IntPtr windowHandle)
@@ -162,7 +162,7 @@ internal static class ImGuiDX11
 
     private static unsafe void NewFrame()
     {
-        ImGui.ImGuiImplWin32NewFrame();
+        ImGuiWin32Impl.NewFrame();
         ImGui.NewFrame();
 
         if (DearImGuiInjection.RenderAction != null)
@@ -183,7 +183,7 @@ internal static class ImGuiDX11
         ImGui.EndFrame();
         ImGui.Render();
 
-        if ((DearImGuiInjection.IO.ConfigFlags & (int)ImGuiConfigFlags.ViewportsEnable) > 0)
+        if ((DearImGuiInjection.IO.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) > 0)
         {
             ImGui.UpdatePlatformWindows();
             ImGui.RenderPlatformWindowsDefault(IntPtr.Zero, IntPtr.Zero);
@@ -209,7 +209,7 @@ internal static class ImGuiDX11
 
         _renderTargetView?.Dispose();
         _renderTargetView = null;
-        ImGui.ImGuiImplDX11InvalidateDeviceObjects();
+        ImGuiDX11Impl.InvalidateDeviceObjects();
     }
 
     private static void PostResizeBuffers(SwapChain swapChain, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)
@@ -227,7 +227,7 @@ internal static class ImGuiDX11
             return;
         }
 
-        ImGui.ImGuiImplDX11CreateDeviceObjects();
+        ImGuiDX11Impl.CreateDeviceObjects();
 
         using var device = swapChain.GetDevice<Device>();
         using var backBuffer = swapChain.GetBackBuffer<Texture2D>(0);

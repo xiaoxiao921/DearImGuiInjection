@@ -73,6 +73,8 @@ public class DX11Renderer : IRenderer
 
     public unsafe bool Init()
     {
+        Log.Info("DX11Renderer.Init()");
+
         var windowHandle = Windows.User32.CreateFakeWindow();
 
         var desc = new SwapChainDescription()

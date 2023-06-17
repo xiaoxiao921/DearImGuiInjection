@@ -5,6 +5,9 @@
 		<PlatformTarget>AnyCPU</PlatformTarget>
 		<LangVersion>preview</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<!-- <DebugSymbols>true</DebugSymbols> -->
+		<!-- <DebugType>embedded</DebugType> -->
+		<!-- <Optimize>false</Optimize> -->
 		<DebugSymbols>false</DebugSymbols>
 		<DebugType>none</DebugType>
 		<Optimize>true</Optimize>
@@ -30,6 +33,10 @@
 		<OutputPath>../bin/</OutputPath>
 		<DefineConstants>NET6</DefineConstants>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="../RendererFinder/RendererFinder.csproj" />
@@ -91,15 +98,34 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0' or '$(Configuration)'=='net6'">
-		<Reference Include="DearImguiSharp">
-			<HintPath>../libs/netstandard2.0/DearImguiSharp.dll</HintPath>
+		<Reference Include="ImGui.NET">
+			<HintPath>../libs/netstandard2.0/ImGui.NET.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)'=='net462'">
-		<Reference Include="DearImguiSharp">
-			<HintPath>../libs/net462/DearImguiSharp.dll</HintPath>
+		<Reference Include="ImGui.NET">
+			<HintPath>../libs/net462/ImGui.NET.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-    
+
+	<ItemGroup Condition="'$(Configuration)'=='net462'">
+		<PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+	</ItemGroup>
+
+
+
+
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+		<Reference Include="Reloaded.Hooks">
+			<HintPath>..\..\Reloaded.Hooks\source\Reloaded.Hooks\bin\Release\net462\Reloaded.Hooks.dll</HintPath>
+		</Reference>
+		<Reference Include="Reloaded.Hooks.Definitions">
+			<HintPath>..\..\Reloaded.Hooks\source\Reloaded.Hooks.Definitions\bin\Release\net462\Reloaded.Hooks.Definitions.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+
+
 </Project>

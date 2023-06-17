@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using DearImGuiInjection.Backends;
 using DearImGuiInjection.Windows;
-using DearImguiSharp;
+using ImGuiNET;
 using RendererFinder.Renderers;
 
 namespace DearImGuiInjection;
@@ -15,9 +16,9 @@ public static class DearImGuiInjection
     /// </summary>
     public static bool Initialized { get; internal set; }
 
-    public static ImGuiContext Context { get; internal set; }
+    public static IntPtr Context { get; internal set; }
 
-    public static ImGuiIO IO { get; internal set; }
+    public static ImGuiIOPtr IO { get; internal set; }
 
     public static string ImGuiIniConfigPath { get; private set; }
     private const string IniFileName = "DearImGuiInjection_imgui.ini";
@@ -60,7 +61,7 @@ public static class DearImGuiInjection
         Context = ImGui.CreateContext(null);
         IO = ImGui.GetIO();
 
-        ((ImGuiIO.__Internal*)IO.__Instance)->IniFilename = Marshal.StringToHGlobalAnsi(ImGuiIniConfigPath);
+        ImGui.GetIO().NativePtr->IniFilename = (byte*)Marshal.StringToHGlobalAnsi(ImGuiIniConfigPath);
 
         DearImGuiTheme.Init();
     }
@@ -76,11 +77,11 @@ public static class DearImGuiInjection
 
         RenderAction = null;
 
-        Marshal.FreeHGlobal(((ImGuiIO.__Internal*)IO.__Instance)->IniFilename);
+        Marshal.FreeHGlobal((IntPtr)ImGui.GetIO().NativePtr->IniFilename);
         IO = null;
 
         ImGui.DestroyContext(Context);
-        Context = null;
+        Context = IntPtr.Zero;
 
         Initialized = false;
     }
@@ -92,13 +93,19 @@ public static class DearImGuiInjection
             case RendererKind.None:
                 break;
             case RendererKind.D3D11:
-                ImGuiDX11.Init();
+                InitImGuiDX11();
                 break;
             case RendererKind.D3D12:
-                ImGuiDX12.Init();
+                InitImGuiDX12();
                 break;
         }
     }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void InitImGuiDX11() => ImGuiDX11.Init();
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void InitImGuiDX12() => ImGuiDX12.Init();
 
     private static void DisposeImplementationFromRendererKind(RendererKind rendererKind)
     {
@@ -126,12 +133,16 @@ public static class DearImGuiInjection
         if (IsCursorVisible)
         {
             IO.MouseDrawCursor = true;
-            IO.ConfigFlags &= ~(int)ImGuiConfigFlags.NoMouse;
+            int flags = (int)IO.ConfigFlags;
+            flags &= ~(int)ImGuiConfigFlags.NoMouse;
+            IO.ConfigFlags = (ImGuiConfigFlags)flags;
         }
         else
         {
             IO.MouseDrawCursor = false;
-            IO.ConfigFlags |= (int)ImGuiConfigFlags.NoMouse;
+            int flags = (int)IO.ConfigFlags;
+            flags |= (int)ImGuiConfigFlags.NoMouse;
+            IO.ConfigFlags = (ImGuiConfigFlags)flags;
         }
     }
 }

@@ -90,14 +90,14 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)'=='netstandard2.0' or '$(Configuration)'=='net6'">
-		<Reference Include="DearImguiSharp">
-			<HintPath>../libs/netstandard2.0/DearImguiSharp.dll</HintPath>
+		<Reference Include="ImGui.NET">
+			<HintPath>../libs/netstandard2.0/ImGui.NET.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)'=='net462'">
-		<Reference Include="DearImguiSharp">
-			<HintPath>../libs/net462/DearImguiSharp.dll</HintPath>
+		<Reference Include="ImGui.NET">
+			<HintPath>../libs/net462/ImGui.NET.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
