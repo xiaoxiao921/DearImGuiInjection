@@ -8,7 +8,6 @@ void FindSolutionDirectory()
     {
         foreach (var item in solutionDirectory.EnumerateFiles())
         {
-            Console.WriteLine(item.FullName);
             if (item.Extension == ".sln")
             {
                 return;
@@ -19,7 +18,7 @@ void FindSolutionDirectory()
 
         if (solutionDirectory == null || !solutionDirectory.Exists)
         {
-            Console.WriteLine("couldnt find a sln file in up directories");
+            Log.Error("couldnt find a sln file in up directories");
             return;
         }
     }
