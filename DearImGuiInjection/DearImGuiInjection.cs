@@ -61,6 +61,8 @@ public static class DearImGuiInjection
         Context = ImGui.CreateContext(null);
         IO = ImGui.GetIO();
 
+        IO.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+
         ImGui.GetIO().NativePtr->IniFilename = (byte*)Marshal.StringToHGlobalAnsi(ImGuiIniConfigPath);
 
         DearImGuiTheme.Init();
@@ -133,16 +135,12 @@ public static class DearImGuiInjection
         if (IsCursorVisible)
         {
             IO.MouseDrawCursor = true;
-            int flags = (int)IO.ConfigFlags;
-            flags &= ~(int)ImGuiConfigFlags.NoMouse;
-            IO.ConfigFlags = (ImGuiConfigFlags)flags;
+            IO.ConfigFlags &= ~ImGuiConfigFlags.NoMouse;
         }
         else
         {
             IO.MouseDrawCursor = false;
-            int flags = (int)IO.ConfigFlags;
-            flags |= (int)ImGuiConfigFlags.NoMouse;
-            IO.ConfigFlags = (ImGuiConfigFlags)flags;
+            IO.ConfigFlags |= ImGuiConfigFlags.NoMouse;
         }
     }
 }
