@@ -8,6 +8,9 @@
 		<!-- <DebugSymbols>true</DebugSymbols> -->
 		<!-- <DebugType>embedded</DebugType> -->
 		<!-- <Optimize>false</Optimize> -->
+		<!-- <DebugSymbols>false</DebugSymbols> -->
+		<!-- <DebugType>none</DebugType> -->
+		<!-- <Optimize>true</Optimize> -->
 		<DebugSymbols>false</DebugSymbols>
 		<DebugType>none</DebugType>
 		<Optimize>true</Optimize>
