@@ -183,11 +183,11 @@ internal static class ImGuiDX11
         ImGui.EndFrame();
         ImGui.Render();
 
-        if ((DearImGuiInjection.IO.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) > 0)
+        /*if ((DearImGuiInjection.IO.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) > 0)
         {
             ImGui.UpdatePlatformWindows();
             ImGui.RenderPlatformWindowsDefault(IntPtr.Zero, IntPtr.Zero);
-        }
+        }*/
     }
 
     private static void PreResizeBuffers(SwapChain swapChain, uint bufferCount, uint width, uint height, Format newFormat, uint swapchainFlags)

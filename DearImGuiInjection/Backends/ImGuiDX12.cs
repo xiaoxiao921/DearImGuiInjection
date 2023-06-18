@@ -289,11 +289,11 @@ internal static class ImGuiDX12
 
         ImGui.Render();
 
-        //if ((DearImGuiInjection.IO.ConfigFlags & (int)ImGuiConfigFlags.ViewportsEnable) > 0)
+        /*if ((DearImGuiInjection.IO.ConfigFlags & (int)ImGuiConfigFlags.ViewportsEnable) > 0)
         {
-            //ImGui.UpdatePlatformWindows();
-            //ImGui.RenderPlatformWindowsDefault(IntPtr.Zero, IntPtr.Zero);
-        }
+            ImGui.UpdatePlatformWindows();
+            ImGui.RenderPlatformWindowsDefault(IntPtr.Zero, IntPtr.Zero);
+        }*/
     }
 
     private static void PreResizeBuffers(SwapChain3 swapChain, int bufferCount, int width, int height, int newFormat, int swapchainFlags)
