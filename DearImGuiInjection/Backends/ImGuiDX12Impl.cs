@@ -418,7 +418,7 @@ public static class ImGuiDX12Impl
         // [Solution 4] command-line: add '/D ImTextureID=ImU64' to your cl.exe command-line (this is what we do in the example_win32_direct12/build_win32.bat file)
         //static_assert(sizeof(ImTextureID) >= sizeof(bd->hFontSrvGpuDescHandle.ptr), "Can't pack descriptor handle into TexID, 32-bit not supported yet.");
 
-        io.Fonts.SetTexID((IntPtr)hFontSrvGpuDescHandle.Ptr);
+        io.Fonts.SetTexID((nint)hFontSrvGpuDescHandle.Ptr);
     }
 
     public static unsafe bool CreateDeviceObjects()
