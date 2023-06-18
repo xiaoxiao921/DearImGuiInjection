@@ -549,19 +549,19 @@ public static class ImGuiDX11Impl
             DepthComparison = Comparison.Always,
             IsStencilEnabled = false,
             FrontFace =
-                {
-                    FailOperation = StencilOperation.Keep,
-                    DepthFailOperation = StencilOperation.Keep,
-                    PassOperation = StencilOperation.Keep,
-                    Comparison = Comparison.Always
-                },
+            {
+                FailOperation = StencilOperation.Keep,
+                DepthFailOperation = StencilOperation.Keep,
+                PassOperation = StencilOperation.Keep,
+                Comparison = Comparison.Always
+            },
             BackFace =
-                {
-                    FailOperation = StencilOperation.Keep,
-                    DepthFailOperation = StencilOperation.Keep,
-                    PassOperation = StencilOperation.Keep,
-                    Comparison = Comparison.Always
-                }
+            {
+                FailOperation = StencilOperation.Keep,
+                DepthFailOperation = StencilOperation.Keep,
+                PassOperation = StencilOperation.Keep,
+                Comparison = Comparison.Always
+            }
         });
 
         CreateFontsTexture();
