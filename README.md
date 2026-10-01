@@ -2,6 +2,14 @@
 
 Inject [Dear ImGui](https://github.com/ocornut/imgui) into any process with C#.
 
+## Deprecation Notice
+
+[Use this project instead.](https://github.com/xiaoxiao921/OverlayDearImGui)
+
+- Do not require a custom renderer backend implementation.
+- Do not require using the Unity API from another thread.
+- [Example mod available here.](https://github.com/xiaoxiao921/InteractableSpawnFix/tree/master)
+
 ## Usage
 
 The keybind for bringing up the cursor for interaction is by default the `Insert` key, which can be modified in the configuration file.
